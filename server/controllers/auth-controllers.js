@@ -298,7 +298,7 @@ if (request.newsletter === "on") {
             companyRoleId:dbData.companyRoleId,
             companyContactId:dbData.companyContactId,
             newsletter:dbData.newsletter,
-            submittionDate:formatted
+            submittionDate:formatted,
 
         }
         const newEntry = new createCompanyDb(initialData);
@@ -349,4 +349,47 @@ const updateCompany = async (req,res)=>{
 
 }
 
-module.exports = {createCompany,companyStatus,updateCompany}; 
+const getCustomer = async(req,res)=>{
+    try {
+        let response = await createCompanyDb.find();
+        if(!response){
+            return res.status(404).send({message:'no user found'})
+        }
+        return res.status(200).send(response)
+    } catch (error) {
+        return res.status(500).send({message:'error in fetching users',error:error})
+    }
+}
+
+const updateCustomer = async (req, res) => {
+    try {
+        const enquiryId = req.params.id;
+        const updateData = req.body;
+        const currentCustomer = await createCompanyDb.findByIdAndUpdate(
+            enquiryId,
+            {
+                $set: {
+                    dueDate: updateData.dueDate,
+                    relationship: updateData.relationship,
+                    comments: updateData.comments.map(comment => ({
+                        comment_text: comment.comment_text,
+                        comment_date: comment.comment_date
+                    }))
+                }
+            },
+            { new: true, runValidators: true } // Options to return the updated document and run validation
+        );
+
+        if (!currentCustomer) {
+            return res.status(404).send('customer not found');
+        }
+
+        res.status(200).send('customer data updated successfully');
+    } catch (error) {
+        console.error('Error customer data:', error);
+        res.status(500).send('Error updating customer data');
+    }
+}
+
+module.exports = {createCompany,companyStatus,updateCompany, getCustomer, updateCustomer}; 
+

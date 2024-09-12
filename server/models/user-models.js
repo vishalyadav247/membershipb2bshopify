@@ -54,7 +54,11 @@ const createCompanySchema = new mongoose.Schema({
     },
     submittionDate:{
         type:String
-    }
+    },
+    comments: [{
+        comment_text: { type: String },
+        comment_date: { type: String }
+    }]
 })
 
 const createCompanyDb = mongoose.model('Membership Form',createCompanySchema);
