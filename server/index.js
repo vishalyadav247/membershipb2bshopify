@@ -5,11 +5,7 @@ const connectDb = require('./utils/db');
 const router = require('./router/auth-routes')
 
 app.use(express.json());
-const corsOptions = {
-    origin: 'https://jgw-check.myshopify.com',
-    optionsSuccessStatus: 200 
-  }
-app.use(cors(corsOptions))
+app.use(cors())
 app.use("/",router)
 
 connectDb().then(() => {
