@@ -7,22 +7,7 @@ const createCompanySchema = new mongoose.Schema({
     lastName:{
         type:String
     },
-    phone:{
-        type:String 
-    },
     email:{
-        type:String
-    },
-    address:{
-        type:String
-    },
-    city:{
-        type:String
-    },
-    state:{
-        type:String
-    },
-    zip:{
         type:String
     },
     countryCode:{

@@ -5,10 +5,10 @@ import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined
 
 function MemberDetails({ customer, onBack }) {
 
-    const baseURL = import.meta.env.VITE_BASE_URL || 'https://app.progryss.com/';
+    const baseURL = import.meta.env.VITE_BASE_URL || 'http://localhost:4000';
     const initialEditValues = {
-
-        name: `${customer.firstName} ${customer.lastName}`,
+        firstName: customer.firstName,
+        lastName:customer.lastName,
         phone: customer.phone,
         email: customer.email,
         address: customer.address,
@@ -127,15 +127,7 @@ function MemberDetails({ customer, onBack }) {
                     <div className="d-flex gap-5 p-3">
                         <div>
                             <div className="label-title">Name:</div>
-                            <div className="label-value">{flyObject.name}</div>
-                        </div>
-                        <div>
-                            <div className="label-title">Phone Number:</div>
-                            <div className="label-value">
-                                <a href={`https://wa.me/${flyObject.phone}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: '#4199FD' }}>
-                                    {flyObject.phone}
-                                </a>
-                            </div>
+                            <div className="label-value">{`${flyObject.firstName} ${flyObject.lastName}`}</div>
                         </div>
                         <div>
                             <div className="label-title">Email:</div>
@@ -156,17 +148,17 @@ function MemberDetails({ customer, onBack }) {
                             <div className="detail-tab-box d-flex justify-content-between pb-2">
                                 <div></div>
                                 <div>
-                                    {!isReadOnly ? (<><button className="btn btn-secondary me-2 btn-sm" onClick={cancelEdit}>Cancel</button><button className="btn btn-primary me-2 saveBtn btn-sm" onClick={saveEnquiry}>Update</button></>) : (<><button className='btn btn-link me-2 updateBtn' onClick={editEnquiry}><i className="fa fa-edit"></i></button></>)}
+                                    {!isReadOnly ? (<><button className="btn btn-outline-primary me-2 btn-sm" onClick={cancelEdit}>Cancel</button><button className="btn btn-primary me-2 saveBtn btn-sm" onClick={saveEnquiry}>Update</button></>) : (<><button className='btn btn-link me-2 updateBtn' onClick={editEnquiry}><i className="fa fa-edit"></i></button></>)}
                                 </div>
                             </div>
                             <div className="two-column-layout">
                                 <h6 className="mb-3">Questions</h6>
                                 <div className="second-column-box">
-                                    <div className="mb-4">
+                                    <div>
                                         <div className="label-title">Due Date / Birth Date:</div>
                                         <input type="date" className="label-value" onChange={(e) => handleChange('dueDate', e.target.value)} readOnly={isReadOnly} value={flyObject.dueDate} />
                                     </div>
-                                    <div className="mb-4">
+                                    <div>
                                         <div className="label-title">Relationship to little person :</div>
                                         <select
                                             className="label-value"
@@ -191,53 +183,21 @@ function MemberDetails({ customer, onBack }) {
                             <h6 className="mb-3">User Details</h6>
                             <div className="first-column-box">
                                 <div className="mb-4">
-                                    <div className="label-title">Name:</div>
-                                    <input className="label-value" onChange={(e) => handleChange('name', e.target.value)} value={flyObject.name} readOnly={true} />
+                                    <div className="label-title">First Name:</div>
+                                    <input className="label-value" onChange={(e) => handleChange('firstName', e.target.value)} value={flyObject.firstName} readOnly={true} />
+                                </div>
+                                <div className="mb-4">
+                                    <div className="label-title">Last Name:</div>
+                                    <input className="label-value" onChange={(e) => handleChange('lastName', e.target.value)} value={flyObject.lastName} readOnly={true} />
                                 </div>
                                 <div className="mb-4">
                                     <div className="label-title">Email:</div>
                                     <input className="label-value" onChange={(e) => handleChange('email', e.target.value)} readOnly={true} value={flyObject.email} />
                                 </div>
                                 <div className="mb-4">
-                                    <div className="label-title">Phone Number:</div>
-                                    <input className="label-value" onChange={(e) => handleChange('phone', e.target.value)} readOnly={true} value={flyObject.phone} />
-                                </div>
-                                <div className="mb-4">
                                     <div className="label-title">Newsletter :</div>
                                     <input className="label-value" onChange={(e) => handleChange('newsletter', e.target.value)} readOnly={true} value={flyObject.newsletter} />
                                 </div>
-                            </div>
-                            <h6 className="mb-3">Shipping Details</h6>
-                            <div className="second-column-box">
-                                <div className="mb-4">
-                                    <div className="label-title">Address :</div>
-                                    <input className="label-value" onChange={(e) => handleChange('address', e.target.value)} readOnly={true} value={flyObject.address} />
-                                </div>
-                                <div className="mb-4">
-                                    <div className="label-title">City:</div>
-                                    <input className="label-value" onChange={(e) => handleChange('city', e.target.value)} readOnly={true} value={flyObject.city} />
-                                </div>
-                                <div className="mb-4">
-                                    <div className="label-title">State:</div>
-                                    <input className="label-value" onChange={(e) => handleChange('state', e.target.value)} readOnly={true} value={flyObject.state} />
-                                </div>
-                                <div className="mb-4">
-                                    <div className="label-title">Zip:</div>
-                                    <input className="label-value" onChange={(e) => handleChange('zip', e.target.value)} readOnly={true} value={flyObject.zip} />
-                                </div>
-                                <div className="mb-4">
-                                    <div className="label-title">Country Code:</div>
-                                    <select
-                                        className="label-value"
-                                        value={flyObject.countryCode}
-                                        onChange={(e) => handleChange('countryCode', e.target.value)}
-                                        disabled={true}
-                                    >
-                                        <option value="">Select</option>
-                                        <option value="IN">India</option>
-                                    </select>
-                                </div>
-
                             </div>
                         </div>
 
@@ -265,11 +225,11 @@ function MemberDetails({ customer, onBack }) {
                                 <>
                                     {editableValues.comments.map((comment, index) => (
                                         <div key={index} className="card mb-3">
-                                            <div className="card-body pb-1">
+                                            <div className="card-body p-2 pb-0">
 
                                                 <div>
-                                                    <div className="comment-text mb-2"><pre style={{ fontFamily: "inherit" }}>{comment.comment_text}</pre></div>
-                                                    <hr className="m-0 mt-3 mb-2" />
+                                                    <div className="comment-text mb-2"><pre style={{ fontFamily: "inherit",lineHeight:"20px" }}>{comment.comment_text}</pre></div>
+                                                    <hr className="m-0 mt-3" />
                                                     <div className="comment-timestamp d-flex justify-content-between align-items-baseline">
                                                         <div>
                                                             <span className="fs-12">{comment.comment_date}</span>

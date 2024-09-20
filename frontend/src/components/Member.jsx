@@ -46,7 +46,7 @@ function Member() {
     setCurrentPage(1);
   };
 
-  const baseURL = import.meta.env.VITE_BASE_URL || 'https://app.progryss.com/';
+  const baseURL = import.meta.env.VITE_BASE_URL || 'http://localhost:4000';
 
   useEffect(() => {
     function hit() {
@@ -60,8 +60,8 @@ function Member() {
               { id: 'submittionDate', title: 'Submittion Date' },
               { id: 'firstName', title: 'First Name' },
               { id: 'lastName', title: 'Last Name' },
-              { id: 'phone', title: 'Phone' },
               { id: 'email', title: 'Email' },
+              { id: 'newsletter', title: 'Newsletter' },
               { id: 'dueDate', title: 'Due Date' },
               { id: 'relationship', title: 'Relationship' },
               { id: 'countryCode', title: 'Country Code' },
@@ -564,4 +564,4 @@ function Member() {
   )
 }
 
-export default Member
+export default Member;
