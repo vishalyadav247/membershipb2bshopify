@@ -1,5 +1,6 @@
 import AppHeader from './components/AppHeader';
-import Member from './components/member';
+import Member from './components/Member';
+
 
 function App() {
 
