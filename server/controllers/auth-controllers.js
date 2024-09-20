@@ -85,11 +85,10 @@ const createCompany = async (req, res) => {
                     shippingAddress: {
                         firstName: request.firstName,
                         lastName: request.lastName,
-                        phone: request.phone,
-                        address1: request.address,
-                        city:request.city,
-                        zoneCode: request.zoneCode,
-                        zip: request.zip,
+                        address1: "",
+                        city:"",
+                        zoneCode: "",
+                        zip: "",
                         countryCode: request.countryCode
                     },
                     billingSameAsShipping: true
@@ -283,12 +282,7 @@ if (request.newsletter === "on") {
         const initialData = {
             firstName:dbData.firstName,
             lastName:dbData.lastName,
-            phone:dbData.phone,
             email:dbData.customerEmail,
-            address:dbData.address,
-            city:dbData.city,
-            state:dbData.zoneCode,
-            zip:dbData.zip,
             countryCode:dbData.countryCode,
             dueDate:dbData.dueDate,
             relationship:dbData.relationship,
