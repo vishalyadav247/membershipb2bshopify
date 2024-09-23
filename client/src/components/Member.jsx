@@ -46,7 +46,7 @@ function Member() {
     setCurrentPage(1);
   };
 
-  const baseURL = import.meta.env.VITE_BASE_URL || 'http://localhost:4000';
+  const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:4000'; 
 
   useEffect(() => {
     function hit() {
