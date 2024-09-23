@@ -51,8 +51,9 @@ function Member() {
   useEffect(() => {
     function hit() {
       fetch(`${baseURL}/get-users`)
-        .then(response => response.json())
+      .then(response => response.json())
         .then(data => {
+          console.log(data)
           if (data.length > 0) {
             const keys = Object.keys(data[0]).filter(key => key !== '_id' && key !== '__v');
             const initialColumns = [
