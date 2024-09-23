@@ -5,7 +5,7 @@ import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined
 
 function MemberDetails({ customer, onBack }) {
 
-    const baseURL = import.meta.env.VITE_BASE_URL || 'http://localhost:4000';
+    const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:4000'; 
     const initialEditValues = {
         firstName: customer.firstName,
         lastName:customer.lastName,
