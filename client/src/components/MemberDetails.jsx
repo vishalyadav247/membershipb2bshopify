@@ -79,7 +79,7 @@ function MemberDetails({ customer, onBack }) {
                     'Content-Type': 'application/json'
                 }
             };
-            const response = await axios.put(`${baseURL}/update-user/${customer._id}`, editableValues, config);
+            const response = await axios.put(`${baseURL}/api/update-user/${customer._id}`, editableValues, config);
             console.log(response.data);
         } catch (error) {
             console.log('Error sending PUT request', error);

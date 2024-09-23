@@ -50,7 +50,7 @@ function Member() {
 
   useEffect(() => {
     function hit() {
-      fetch(`${baseURL}/get-users`)
+      fetch(`${baseURL}/api/get-users`)
       .then(response => response.json())
         .then(data => {
           console.log(data)
