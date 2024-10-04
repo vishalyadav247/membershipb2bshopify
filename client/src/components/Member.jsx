@@ -46,14 +46,13 @@ function Member() {
     setCurrentPage(1);
   };
 
-  const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:4000'; 
+  const baseURL = process.env.REACT_APP_BASE_URL; 
 
   useEffect(() => {
     function hit() {
       fetch(`${baseURL}/api/get-users`)
       .then(response => response.json())
         .then(data => {
-          console.log(data)
           if (data.length > 0) {
             const keys = Object.keys(data[0]).filter(key => key !== '_id' && key !== '__v');
             const initialColumns = [

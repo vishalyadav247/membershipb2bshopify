@@ -8,4 +8,5 @@ router.post('/update-company',allControlers.updateCompany)
 
 router.get('/get-users',allControlers.getCustomer)
 router.put('/update-user/:id',allControlers.updateCustomer)
+router.get('/get-users/:id', allControlers.getCustomerById)
 module.exports = router; 

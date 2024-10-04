@@ -272,9 +272,6 @@ if (request.newsletter === "on") {
     });
 }
 
-
-
-
         let dbData = {...request,...otherData}
         const date = new Date();
         const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
@@ -315,7 +312,7 @@ const companyStatus = async (req,res) => {
             res.status(401).json({message:'user not found in db'});
         }
     } catch (error) {
-        
+        console.log(error, "Error in fetching Company Status")
     }
 }
 
@@ -353,7 +350,8 @@ const getCustomer = async(req,res)=>{
     } catch (error) {
         return res.status(500).send({message:'error in fetching users',error:error})
     }
-}
+};
+
 
 const updateCustomer = async (req, res) => {
     try {
@@ -383,7 +381,22 @@ const updateCustomer = async (req, res) => {
         console.error('Error customer data:', error);
         res.status(500).send('Error updating customer data');
     }
-}
+};
 
-module.exports = {createCompany,companyStatus,updateCompany, getCustomer, updateCustomer}; 
+
+const getCustomerById = async(req,res)=>{
+    const { id } = req.params;
+    console.log(id,"PARAMS")
+    try {
+        let response = await createCompanyDb.findById(id);
+        if(!response){
+            return res.status(404).send({message:'no user found'})
+        }
+        return res.status(200).json(response)
+    } catch (error) {
+        return res.status(500).send({message:'error in fetching user by Id', error:error})
+    }
+};
+
+module.exports = {createCompany,companyStatus,updateCompany, getCustomer, updateCustomer, getCustomerById}; 
 

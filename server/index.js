@@ -6,11 +6,12 @@ const router = require('./router/auth-routes')
 
 app.use(express.json());
 app.use(cors())
-app.use("/api/",router)
+app.use("/api/",router);
+
 
 connectDb().then(() => {
     const port = 5000;
     app.listen(port, () => {
         console.log(`server started at port: ${port}.`)
     })
-}) 
+}).catch((err)=> console.log(err,"ERROR in Connection"))
