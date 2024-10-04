@@ -3,48 +3,139 @@ const createCompanyDb = require('../models/user-models')
 const accessToken = process.env.STORE_API_PASSWORD;
 const url = process.env.STORE_GRAPHQL_URL;
 
-
-const nodemailer = require('nodemailer');
-const ejs = require('ejs');
-const path = require('path');
-
-const user = process.env.EMAIL_USER;
-const pass = process.env.EMAIL_PASS;
-
-const sendEmail = async (emailData) => {
-    const transporter = nodemailer.createTransport({
-        service: 'gmail', // Use your preferred service
-        auth: {
-            user: user,
-            pass: pass
-        }
-    });
-
-    const templatePath = path.resolve(__dirname, '../views/emailTemplate.ejs');
-    const html = await ejs.renderFile(templatePath, { data: emailData });
-
-    const mailOptions = {
-        from: 'webmaster@justgoweb.com',
-        to: emailData.email,
-        subject: 'New Company Registration',
-        html: html
-    };
-
-    transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-            console.error('Error sending email:', error);
-        } else {
-            console.log('Email sent:', info.response);
-        }
-    });
-};
-
-
-
 const createCompany = async (req, res) => {
     const request = await req.body;
     let otherData = {}
+    
     try {
+        // Step 1: Check if the Customer Exists by Email
+        const customerSearchQuery = `
+            query findCustomerByEmail($query: String!) {
+                customers(first: 1, query: $query) {
+                    edges {
+                        node {
+                            id
+                            email
+                            firstName
+                            lastName
+                        }
+                    }
+                }
+            }`;
+
+        const searchVariables = {
+            query: `email:${request.customerEmail}`
+        };
+
+        let response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Shopify-Access-Token': accessToken
+            },
+            body: JSON.stringify({ query: customerSearchQuery, variables: searchVariables })
+        });
+
+        let data = await response.json();
+
+        let customerId;
+        if (data.data.customers.edges.length > 0) {
+            // Customer exists, retrieve customer ID
+            const customer = data.data.customers.edges[0].node;
+            customerId = customer.id;
+
+            // Step 2: Check if First Name and Last Name are blank and update if necessary
+            if (!customer.firstName || !customer.lastName) {
+                const updateCustomerQuery = `
+                    mutation updateCustomer($input: CustomerInput!) {
+                        customerUpdate(input: $input) {
+                            customer {
+                                id
+                                firstName
+                                lastName
+                            }
+                            userErrors {
+                                message
+                                field
+                            }
+                        }
+                    }`;
+
+                const updateCustomerVariables = {
+                    input: {
+                        id: customerId,
+                        firstName: customer.firstName || request.firstName,
+                        lastName: customer.lastName || request.lastName
+                    }
+                };
+
+                response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Shopify-Access-Token': accessToken
+                    },
+                    body: JSON.stringify({ query: updateCustomerQuery, variables: updateCustomerVariables })
+                });
+
+                data = await response.json();
+
+                if (data.errors) {
+                    throw new Error(data.errors.map(e => e.message).join(', '));
+                }
+            }
+        } else {
+            // Customer does not exist, create a new one
+            const customerCreateQuery = `
+                mutation createCustomer($input: CustomerInput!) {
+                    customerCreate(input: $input) {
+                        customer {
+                            id
+                            email
+                            firstName
+                            lastName
+                        }
+                        userErrors {
+                            message
+                            field
+                        }
+                    }
+                }`;
+
+            const customerCreateVariables = {
+                input: {
+                    firstName: request.firstName,
+                    lastName: request.lastName,
+                    email: request.customerEmail,
+                    metafields: [
+                        {
+                            namespace: "my_field",
+                            key: "nickname",
+                            type: "single_line_text_field",
+                            value: request.firstName
+                        }
+                    ]
+                }
+            };
+
+            response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Shopify-Access-Token': accessToken
+                },
+                body: JSON.stringify({ query: customerCreateQuery, variables: customerCreateVariables })
+            });
+
+            data = await response.json();
+
+            if (!data.data.customerCreate.customer) {
+                throw new Error(data.data.customerCreate.userErrors.map(e => e.message).join(', '));
+            }
+            customerId = data.data.customerCreate.customer.id;
+        }
+
+        // Proceed with the previous company creation, linking customer, and assigning role logic
         // Step 1: Create Company and Fetch IDs
         const query1 = `
             mutation CompanyCreate($input: CompanyCreateInput!) {
@@ -69,7 +160,6 @@ const createCompany = async (req, res) => {
                     userErrors {
                         field
                         message
-                        code
                     }
                 }
             }`;
@@ -86,7 +176,7 @@ const createCompany = async (req, res) => {
                         firstName: request.firstName,
                         lastName: request.lastName,
                         address1: "",
-                        city:"",
+                        city: "",
                         zoneCode: "",
                         zip: "",
                         countryCode: request.countryCode
@@ -96,7 +186,7 @@ const createCompany = async (req, res) => {
             }
         };
 
-        let response = await fetch(url, {
+        response = await fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -105,7 +195,7 @@ const createCompany = async (req, res) => {
             body: JSON.stringify({ query: query1, variables: variables1 })
         });
 
-        let data = await response.json();
+        data = await response.json();
 
         if (!data.data || !data.data.companyCreate) {
             throw new Error(data.errors ? data.errors.map(e => e.message).join(', ') : 'Unknown error in creating company');
@@ -123,7 +213,7 @@ const createCompany = async (req, res) => {
         if (!roleEdge) {
             throw new Error('No role returned for the company.');
         }
-        
+
         const roleId = roleEdge.node.id;
         const companyId = company.id;
         const locationId = locationEdge.node.id;
@@ -147,7 +237,7 @@ const createCompany = async (req, res) => {
 
         const variables2 = {
             companyId: companyId,
-            customerId: request.customerId
+            customerId: customerId
         };
 
         response = await fetch(url, {
@@ -159,7 +249,6 @@ const createCompany = async (req, res) => {
             body: JSON.stringify({ query: query2, variables: variables2 })
         });
 
-        
         data = await response.json();
 
         if (!data.data || !data.data.companyAssignCustomerAsContact) {
@@ -181,7 +270,7 @@ const createCompany = async (req, res) => {
         const companyContactId = companyContact.id;
         otherData.companyContactId = companyContactId;
 
-        // // Step 3: Assign Role to Company Contact
+        // Step 3: Assign Role to Company Contact
         const query3 = `
             mutation assignRoleToCompanyContact($companyContactId: ID!, $rolesToAssign: [CompanyContactRoleAssign!]!) {
                 companyContactAssignRoles(companyContactId: $companyContactId, rolesToAssign: $rolesToAssign) {
@@ -223,99 +312,96 @@ const createCompany = async (req, res) => {
             throw new Error(data.errors.map(e => e.message).join(', '));
         }
 
-// Assuming 'request' is your incoming object that includes the 'newsletter' field
-if (request.newsletter === "on") {
-    // Define the GraphQL query and variables for updating email marketing consent
-    const marketingConsentQuery = `
-        mutation customerEmailMarketingConsentUpdate($input: CustomerEmailMarketingConsentUpdateInput!) {
-            customerEmailMarketingConsentUpdate(input: $input) {
-                customer {
-                    id
+        // Assuming 'request' is your incoming object that includes the 'newsletter' field
+        if (request.newsletter === "on") {
+            // Define the GraphQL query and variables for updating email marketing consent
+            const marketingConsentQuery = `
+                mutation customerEmailMarketingConsentUpdate($input: CustomerEmailMarketingConsentUpdateInput!) {
+                    customerEmailMarketingConsentUpdate(input: $input) {
+                        customer {
+                            id
+                        }
+                        userErrors {
+                            field
+                            message
+                        }
+                    }
+                }`;
+
+            const marketingConsentVariables = {
+                input: {
+                    customerId: customerId,
+                    emailMarketingConsent: {
+                        consentUpdatedAt: "2019-09-07T15:50:00Z", // Update the timestamp to the current time
+                        marketingOptInLevel: "CONFIRMED_OPT_IN",
+                        marketingState: "SUBSCRIBED"
+                    }
                 }
-                userErrors {
-                    field
-                    message
+            };
+
+            // Execute the GraphQL mutation using fetch
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Shopify-Access-Token': accessToken
+                },
+                body: JSON.stringify({ query: marketingConsentQuery, variables: marketingConsentVariables })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.errors) {
+                    console.error('Error updating marketing consent:', data.errors);
+                } else {
+                    console.log('Marketing consent updated successfully:', data.data.customerEmailMarketingConsentUpdate.customer);
                 }
-            }
-        }`;
-
-    const marketingConsentVariables = {
-        input: {
-            customerId: request.customerId,
-            emailMarketingConsent: {
-                consentUpdatedAt: "2019-09-07T15:50:00Z", // Update the timestamp to the current time
-                marketingOptInLevel: "CONFIRMED_OPT_IN",
-                marketingState: "SUBSCRIBED"
-            }
+            })
+            .catch(error => {
+                console.error('Error sending request:', error);
+            });
         }
-    };
 
-    // Execute the GraphQL mutation using fetch
-    fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-Shopify-Access-Token': accessToken
-        },
-        body: JSON.stringify({ query: marketingConsentQuery, variables: marketingConsentVariables })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.errors) {
-            console.error('Error updating marketing consent:', data.errors);
-        } else {
-            console.log('Marketing consent updated successfully:', data.data.customerEmailMarketingConsentUpdate.customer);
-        }
-    })
-    .catch(error => {
-        console.error('Error sending request:', error);
-    });
-}
-
-
-
-
-        let dbData = {...request,...otherData}
+        let dbData = { ...request, ...otherData };
         const date = new Date();
         const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
         const formatted = date.toLocaleDateString('en-CA', options);
         const initialData = {
-            firstName:dbData.firstName,
-            lastName:dbData.lastName,
-            email:dbData.customerEmail,
-            countryCode:dbData.countryCode,
-            dueDate:dbData.dueDate,
-            relationship:dbData.relationship,
-            customerId:dbData.customerId,
-            companyId:dbData.companyId,
-            locationId:dbData.locationId,
-            companyRoleId:dbData.companyRoleId,
-            companyContactId:dbData.companyContactId,
-            newsletter:dbData.newsletter,
-            submittionDate:formatted,
-
-        }
+            firstName: dbData.firstName,
+            lastName: dbData.lastName,
+            email: dbData.customerEmail,
+            countryCode: dbData.countryCode,
+            dueDate: Math.floor(new Date(dbData.dueDate).getTime() / 1000),
+            relationship: dbData.relationship,
+            customerId: dbData.customerId,
+            companyId: dbData.companyId,
+            locationId: dbData.locationId,
+            companyRoleId: dbData.companyRoleId,
+            companyContactId: dbData.companyContactId,
+            newsletter: dbData.newsletter === "on" ? true : false,
+            submittionDate: formatted,
+        };
         const newEntry = new createCompanyDb(initialData);
-        newEntry.save()
-        await sendEmail(initialData);
-        res.status(200).json({message:'company created',formData:dbData })
+        newEntry.save();
+        res.status(200).json({ message: 'company created', formData: dbData });
 
     } catch (error) {
         console.error('Error:', error);
     }
-}
+};
+
+
 
 const companyStatus = async (req,res) => {
     const request = await req.body;
     try {
-        const check = await createCompanyDb.findOne({customerId: `gid://shopify/Customer/${request.id}`});
+        const check = await createCompanyDb.findOne({email: request.email});
         if(check != null){
-            res.status(200).json({message:'user found', object:check});
+            res.status(401).json({message:'you are already subscribe, Please login', object:check});
         }else{
-            res.status(401).json({message:'user not found in db'});
+            res.status(200).json({message:'new email id'});
         }
     } catch (error) {
-        
+        return res.status(200).send({message:'error in checking email id',error:error})
     }
 }
 

@@ -35,7 +35,7 @@ const createCompanySchema = new mongoose.Schema({
         type:String
     },
     newsletter:{
-        type:String
+        type:Boolean
     },
     submittionDate:{
         type:String
