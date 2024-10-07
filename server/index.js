@@ -9,6 +9,7 @@ const UserAuthDb = require("./models/user-authenticate");
 const bcrypt = require('bcrypt');
 
 app.use(express.json());
+
 app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
@@ -126,6 +127,7 @@ app.get('/api/logout_admin', async (req, res) => {
         res.status(200).json({ status: true, message: 'No session to log out.' });
     }
 });
+
 
 
 connectDb().then(() => {
