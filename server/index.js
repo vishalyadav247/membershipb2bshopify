@@ -14,7 +14,7 @@ app.use(session({
     resave: false,
     saveUninitialized: true,
     store: mongoStore.create({ mongoUrl: 'mongodb://localhost/session-db' }),
-    cookie: { secure: false, maxAge: 60000, httpOnly: true } // 60 seconds
+    cookie: { secure: false, maxAge: 86400000, httpOnly: true } // For 1 Day
 }));
 app.use(cors({
     origin: 'http://localhost:3000',
