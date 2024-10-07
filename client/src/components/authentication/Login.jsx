@@ -10,6 +10,8 @@ import MuiCard from '@mui/material/Card';
 import { styled } from '@mui/material/styles';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { loginApi } from '../../services/apis';
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: 'flex',
@@ -59,20 +61,37 @@ export default function Login(props) {
   const [emailErrorMessage, setEmailErrorMessage] = useState('');
   const [passwordError, setPasswordError] = useState(false);
   const [passwordErrorMessage, setPasswordErrorMessage] = useState('');
+  const [loginErr, setLoginErr] = useState('');
 
   const navigate = useNavigate();
 
-  const handleSubmit = (event) => {
-      event.preventDefault();
- 
-      if(validateInputs()){
-        console.log({
-          email: email,
-          password: password,
+  const handleSubmit = async (event) => {
+    event.preventDefault();;
+
+    const formData = {
+      email: email,
+      password: password,
+    };
+
+    if (validateInputs()) {
+      try {
+        const res = await axios.post(loginApi, formData, {
+          withCredentials: true
         });
+        const data = res ? res?.data : null;
+        if (data?.userData?._id) {
+          localStorage.setItem('user', data?.userData?._id);
+        };
+
+        console.log(data, "-------->>>>>")
         resetForm();
         navigate("/");
+      } catch (error) {
+        console.log(error, "Login API Error");
+        setLoginErr("Invalid credentials email and password");
       }
+
+    }
   };
 
   const validateInputs = () => {
@@ -102,7 +121,7 @@ export default function Login(props) {
     return isValid;
   };
 
-  const resetForm = () =>{
+  const resetForm = () => {
     setEmail("");
     setPassword("");
     setEmailError(false);
@@ -112,51 +131,51 @@ export default function Login(props) {
   }
 
   return (
-      <SignInContainer direction="column" justifyContent="space-between" height="100vh" >
-        <Card variant="outlined">
-          <Typography
-            component="h1"
-            variant="h4"
-            sx={{ width: '100%', fontSize: 'clamp(2rem, 10vw, 2.15rem)' }}
-          >
-            Sign in
-          </Typography>
-          <Box
-            component="form"
-            onSubmit={handleSubmit}
-            noValidate
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              width: '100%',
-              gap: 2,
-            }}
-          >
-            <FormControl>
-              <FormLabel htmlFor="email">Email</FormLabel>
-              <TextField
-                error={emailError}
-                helperText={emailErrorMessage}
-                id="email"
-                type="email"
-                name="email"
-                placeholder="your@email.com"
-                autoComplete="email"
-                autoFocus
-                required
-                fullWidth
-                variant="outlined"
-                onChange={(e) => setEmail(e.target.value)}
-                color={emailError ? 'error' : 'primary'}
-                sx={{ ariaLabel: 'email' }}
-                value={email}
+    <SignInContainer direction="column" justifyContent="space-between" height="100vh" >
+      <Card variant="outlined">
+        <Typography
+          component="h1"
+          variant="h4"
+          sx={{ width: '100%', fontSize: 'clamp(2rem, 10vw, 2.15rem)' }}
+        >
+          Sign in
+        </Typography>
+        <Box
+          component="form"
+          onSubmit={handleSubmit}
+          noValidate
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            width: '100%',
+            gap: 2,
+          }}
+        >
+          <FormControl>
+            <FormLabel htmlFor="email">Email</FormLabel>
+            <TextField
+              error={emailError}
+              helperText={emailErrorMessage}
+              id="email"
+              type="email"
+              name="email"
+              placeholder="your@email.com"
+              autoComplete="email"
+              autoFocus
+              required
+              fullWidth
+              variant="outlined"
+              onChange={(e) => setEmail(e.target.value)}
+              color={emailError ? 'error' : 'primary'}
+              sx={{ ariaLabel: 'email' }}
+              value={email}
 
-              />
-            </FormControl>
-            <FormControl>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <FormLabel htmlFor="password">Password</FormLabel>
-                {/* <Link
+            />
+          </FormControl>
+          <FormControl>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+              <FormLabel htmlFor="password">Password</FormLabel>
+              {/* <Link
                   component="button"
                   type="button"
                   onClick={handleClickOpen}
@@ -165,34 +184,35 @@ export default function Login(props) {
                 >
                   Forgot your password?
                 </Link> */}
-              </Box>
-              <TextField
-                error={passwordError}
-                helperText={passwordErrorMessage}
-                name="password"
-                placeholder="••••••"
-                type="password"
-                id="password"
-                autoComplete="current-password"
-                autoFocus
-                required
-                fullWidth
-                variant="outlined"
-                color={passwordError ? 'error' : 'primary'}
-                onChange={(e) => setPassword(e.target.value)}
-                value={password}
-              />
-            </FormControl>
-
-            <Button
-              type="submit"
+            </Box>
+            <TextField
+              error={passwordError}
+              helperText={passwordErrorMessage}
+              name="password"
+              placeholder="••••••"
+              type="password"
+              id="password"
+              autoComplete="current-password"
+              autoFocus
+              required
               fullWidth
-              variant="contained"
-            >
-             Login
-            </Button>
-          </Box>
-        </Card>
-      </SignInContainer>
+              variant="outlined"
+              color={passwordError ? 'error' : 'primary'}
+              onChange={(e) => setPassword(e.target.value)}
+              value={password}
+            />
+          </FormControl>
+
+          <Button
+            type="submit"
+            fullWidth
+            variant="contained"
+          >
+            Login
+          </Button>
+          <Typography variant='body1' color='#d32f2f' textAlign="center" component={'span'}>{loginErr}</Typography>
+        </Box>
+      </Card>
+    </SignInContainer>
   );
 }
