@@ -7,6 +7,7 @@ const connectDb = require('./utils/db');
 const router = require('./router/auth-routes')
 const UserAuthDb = require("./models/user-authenticate");
 const bcrypt = require('bcrypt');
+const { checkSessionUser } = require('./middlewares/isAuth');
 
 app.use(express.json());
 
@@ -72,7 +73,7 @@ app.post('/api/login_admin', async (req, res) => {
             return res.status(401).json({ err: "Invalid Password" })
         };
 
-        req.session.isAuth = true;
+        req.session.userId = existingUser._id;
 
         req.session.save((err) => {
             if (err) {
@@ -96,8 +97,8 @@ app.post('/api/login_admin', async (req, res) => {
 });
 
 app.get('/api/check-user', function (req, res) {
-    console.log(req.session,"CHECK")
-    if (req.session.isAuth) {
+    console.log(req.session, "CHECK")
+    if (req.session.userId) {
         res.status(200).json({
             user: true,
             msg: "User Already Logged In"
@@ -108,6 +109,25 @@ app.get('/api/check-user', function (req, res) {
             msg: "Session is Expired, Please Login Again"
         });
     };
+});
+
+app.patch('/api/update_password', checkSessionUser, async (req, res) => {
+    const id = req.session.userId;
+    const { password } = req.body;
+
+    const hashedPass = bcrypt.hashSync(password, 10);
+
+    try {
+        await UserAuthDb.findByIdAndUpdate(id, { password: hashedPass }, { new: true });
+
+        return res.status(200).json({
+            status: true,
+            message: "Your Password has been changed successfully",
+        });
+
+    } catch (error) {
+        console.log(error, "Internal Error : Password Not Changed")
+    }
 });
 
 app.get('/api/logout_admin', async (req, res) => {

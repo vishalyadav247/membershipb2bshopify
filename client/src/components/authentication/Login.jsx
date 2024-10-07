@@ -79,9 +79,6 @@ export default function Login(props) {
           withCredentials: true
         });
         const data = res ? res?.data : null;
-        if (data?.userData?._id) {
-          localStorage.setItem('user', data?.userData?._id);
-        };
 
         console.log(data, "-------->>>>>")
         resetForm();

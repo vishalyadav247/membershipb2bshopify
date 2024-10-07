@@ -1,5 +1,6 @@
 import AppHeader from './components/AppHeader';
 import Login from './components/authentication/Login';
+import PasswordChange from './components/authentication/PasswordChangeForm';
 import Protected from './components/authentication/Protected';
 import AuthProtected from './components/authentication/PublicProtectedRoute';
 import Member from './components/Member';
@@ -14,6 +15,15 @@ const router = createBrowserRouter([
           <AppHeader />
           <Member />
         </>
+      </Protected>
+    )
+  },
+  {
+    path: "/change-password",
+    element: (
+      <Protected>
+        <AppHeader />
+        <PasswordChange />
       </Protected>
     )
   },
