@@ -5,7 +5,7 @@ import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined
 
 function MemberDetails({ customer, onBack }) {
 
-    const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:4000'; 
+    const baseURL = process.env.REACT_APP_BASE_URL; 
     const initialEditValues = {
         firstName: customer.firstName,
         lastName:customer.lastName,
@@ -226,7 +226,7 @@ function MemberDetails({ customer, onBack }) {
                                     {editableValues.comments.map((comment, index) => (
                                         <div key={index} className="card mb-3">
                                             <div className="card-body p-2 pb-0">
-
+                                                
                                                 <div>
                                                     <div className="comment-text mb-2"><pre style={{ fontFamily: "inherit",lineHeight:"20px" }}>{comment.comment_text}</pre></div>
                                                     <hr className="m-0 mt-3" />

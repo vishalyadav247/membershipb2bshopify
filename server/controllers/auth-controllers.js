@@ -361,7 +361,33 @@ const createCompany = async (req, res) => {
             });
         }
 
+    };
+
+    // Execute the GraphQL mutation using fetch
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Shopify-Access-Token': accessToken
+        },
+        body: JSON.stringify({ query: marketingConsentQuery, variables: marketingConsentVariables })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.errors) {
+            console.error('Error updating marketing consent:', data.errors);
+        } else {
+            console.log('Marketing consent updated successfully:', data.data.customerEmailMarketingConsentUpdate.customer);
+        }
+    })
+    .catch(error => {
+        console.error('Error sending request:', error);
+    });
+}
+
+
         let dbData = { ...request, ...otherData };
+
         const date = new Date();
         const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
         const formatted = date.toLocaleDateString('en-CA', options);
@@ -401,6 +427,7 @@ const companyStatus = async (req,res) => {
             res.status(200).json({message:'new email id'});
         }
     } catch (error) {
+        console.log(error, "Error in fetching Company Status")
         return res.status(200).send({message:'error in checking email id',error:error})
     }
 }
@@ -439,7 +466,8 @@ const getCustomer = async(req,res)=>{
     } catch (error) {
         return res.status(500).send({message:'error in fetching users',error:error})
     }
-}
+};
+
 
 const updateCustomer = async (req, res) => {
     try {
@@ -469,7 +497,22 @@ const updateCustomer = async (req, res) => {
         console.error('Error customer data:', error);
         res.status(500).send('Error updating customer data');
     }
-}
+};
 
-module.exports = {createCompany,companyStatus,updateCompany, getCustomer, updateCustomer}; 
+
+const getCustomerById = async(req,res)=>{
+    const { id } = req.params;
+    console.log(id,"PARAMS")
+    try {
+        let response = await createCompanyDb.findById(id);
+        if(!response){
+            return res.status(404).send({message:'no user found'})
+        }
+        return res.status(200).json(response)
+    } catch (error) {
+        return res.status(500).send({message:'error in fetching user by Id', error:error})
+    }
+};
+
+module.exports = {createCompany,companyStatus,updateCompany, getCustomer, updateCustomer, getCustomerById}; 
 
