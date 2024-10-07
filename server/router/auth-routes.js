@@ -9,6 +9,6 @@ router.post('/update-company',allControlers.updateCompany)
 
 router.get('/get-users', checkSessionUser, allControlers.getCustomer)
 router.put('/update-user/:id',allControlers.updateCustomer)
-router.get('/get-users/:id', allControlers.getCustomerById)
+// router.get('/get-users/:id', allControlers.getCustomerById)
 
 module.exports = router; 

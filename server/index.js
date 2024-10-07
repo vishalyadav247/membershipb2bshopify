@@ -17,13 +17,13 @@ app.use(session({
     store: mongoStore.create({ mongoUrl: 'mongodb://localhost/session-db' }),
     cookie: { secure: false, maxAge: 86400000, httpOnly: true } // For 1 Day
 }));
+
 app.use(cors({
     origin: 'http://localhost:3000',
     credentials: true
 }));
 
 app.use("/api/", router);
-
 
 app.post('/api/create_admin', async (req, res) => {
     const { email, password } = req.body;
