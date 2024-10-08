@@ -6,7 +6,6 @@ import MemberDetails from "./MemberDetails";
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Diversity3OutlinedIcon from '@mui/icons-material/Diversity3Outlined';
-import { useNavigate } from "react-router-dom";
 
 function Member() {
   const [columns, setColumns] = useState([]);
@@ -21,8 +20,6 @@ function Member() {
   const [columnWidths, setColumnWidths] = useState({});
   const [viewingCustomer, setViewingCustomer] = useState(null);
   const tableHeaderRef = useRef(null);
-  const navigate = useNavigate();
-
   const gettingOptions = JSON.parse(localStorage.getItem('filterOptions'))
   const opt = {
     relationship: "null",

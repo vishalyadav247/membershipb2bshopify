@@ -13,7 +13,7 @@ const Protected = ({ children }) => {
             });
             const user = res?.data;
             if (!user?.user) {
-                navigate('/login', { replace: true });
+                navigate('/login', { replace: true }); 
             }
         } catch (error) {
             console.error("Failed to check if user is logged in:", error);

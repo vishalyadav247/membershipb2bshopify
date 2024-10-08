@@ -5,6 +5,15 @@ import Protected from './components/authentication/Protected';
 import AuthProtected from './components/authentication/PublicProtectedRoute';
 import Member from './components/Member';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
+
+const theme = createTheme({
+  typography: {
+    fontFamily: [
+      'Poppins',
+    ].join(','),
+  }
+});
 
 const router = createBrowserRouter([
   {
@@ -40,9 +49,9 @@ const router = createBrowserRouter([
 function App() {
 
   return (
-    <div>
+    <ThemeProvider theme={theme}>
       <RouterProvider router={router} />
-    </div>
+    </ThemeProvider>
   )
 }
 

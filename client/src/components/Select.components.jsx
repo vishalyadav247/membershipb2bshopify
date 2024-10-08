@@ -7,6 +7,10 @@ import EditIcon from '@mui/icons-material/Edit';
 import LogoutIcon from '@mui/icons-material/Logout';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { logoutApi } from '../services/apis';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const StyledMenu = styled((props) => (
   <Menu
@@ -59,9 +63,30 @@ export default function CustomizedMenus() {
     setAnchorEl(event.currentTarget);
   };
 
-  const handleClose = () => {
+  const handleClose =() =>{
     setAnchorEl(null);
   };
+
+ const handleLogout = async() => {
+  try {
+    const res = await axios.get(logoutApi,{
+      withCredentials:true
+    });
+    const status = res ? res.status : 401;
+    if(status===200){
+      toast.success("Logged Out Successfully");
+      setTimeout(()=>{
+        navigate('/login', {replace:true});
+      }, 1000)
+    }
+
+    setAnchorEl(null);
+  } catch (error) {
+    console.log(error,"Logout API Error");
+    toast.warning("Logout Failed");
+  }
+
+ }
 
   const changePassword = () =>{
     navigate('/change-password')
@@ -70,6 +95,7 @@ export default function CustomizedMenus() {
 
   return (
     <div>
+       <ToastContainer position='top-right' />
       <Button
         id="demo-customized-button"
         aria-controls={open ? 'demo-customized-menu' : undefined}
@@ -80,7 +106,7 @@ export default function CustomizedMenus() {
         onClick={handleClick}
         endIcon={<KeyboardArrowDownIcon />}
       >
-        Options
+        Welcome
       </Button>
       <StyledMenu
         id="demo-customized-menu"
@@ -95,7 +121,7 @@ export default function CustomizedMenus() {
           <EditIcon />
          Change Password
         </MenuItem>
-        <MenuItem onClick={handleClose} disableRipple>
+        <MenuItem onClick={handleLogout} disableRipple>
           <LogoutIcon />
           Logout
         </MenuItem>

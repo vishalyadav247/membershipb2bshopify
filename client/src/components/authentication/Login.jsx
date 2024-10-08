@@ -12,6 +12,10 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { loginApi } from '../../services/apis';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
+import { IconButton, InputAdornment } from '@mui/material';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: 'flex',
@@ -54,6 +58,28 @@ const SignInContainer = styled(Stack)(({ theme }) => ({
   },
 }));
 
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#000000',
+    },
+  },
+  components: {
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: {
+          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+            borderColor: 'black',
+          },
+          '&:hover .MuiOutlinedInput-notchedOutline': {
+            borderColor: 'black',
+          },
+        },
+      },
+    },
+  },
+});
+
 export default function Login(props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -61,6 +87,8 @@ export default function Login(props) {
   const [emailErrorMessage, setEmailErrorMessage] = useState('');
   const [passwordError, setPasswordError] = useState(false);
   const [passwordErrorMessage, setPasswordErrorMessage] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
   const [loginErr, setLoginErr] = useState('');
 
   const navigate = useNavigate();
@@ -82,7 +110,7 @@ export default function Login(props) {
 
         console.log(data, "-------->>>>>")
         resetForm();
-        navigate("/");
+        navigate("/",{replace:true});
       } catch (error) {
         console.log(error, "Login API Error");
         setLoginErr("Invalid credentials email and password");
@@ -125,91 +153,103 @@ export default function Login(props) {
     setEmailErrorMessage('');
     setPasswordError(false);
     setPasswordErrorMessage("");
-  }
+  };
+
+  const handleTogglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
 
   return (
     <SignInContainer direction="column" justifyContent="space-between" height="100vh" >
-      <Card variant="outlined">
-        <Typography
-          component="h1"
-          variant="h4"
-          sx={{ width: '100%', fontSize: 'clamp(2rem, 10vw, 2.15rem)' }}
-        >
-          Sign in
-        </Typography>
-        <Box
-          component="form"
-          onSubmit={handleSubmit}
-          noValidate
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            width: '100%',
-            gap: 2,
-          }}
-        >
-          <FormControl>
-            <FormLabel htmlFor="email">Email</FormLabel>
-            <TextField
-              error={emailError}
-              helperText={emailErrorMessage}
-              id="email"
-              type="email"
-              name="email"
-              placeholder="your@email.com"
-              autoComplete="email"
-              autoFocus
-              required
-              fullWidth
-              variant="outlined"
-              onChange={(e) => setEmail(e.target.value)}
-              color={emailError ? 'error' : 'primary'}
-              sx={{ ariaLabel: 'email' }}
-              value={email}
-
-            />
-          </FormControl>
-          <FormControl>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <FormLabel htmlFor="password">Password</FormLabel>
-              {/* <Link
-                  component="button"
-                  type="button"
-                  onClick={handleClickOpen}
-                  variant="body2"
-                  sx={{ alignSelf: 'baseline' }}
-                >
-                  Forgot your password?
-                </Link> */}
-            </Box>
-            <TextField
-              error={passwordError}
-              helperText={passwordErrorMessage}
-              name="password"
-              placeholder="••••••"
-              type="password"
-              id="password"
-              autoComplete="current-password"
-              autoFocus
-              required
-              fullWidth
-              variant="outlined"
-              color={passwordError ? 'error' : 'primary'}
-              onChange={(e) => setPassword(e.target.value)}
-              value={password}
-            />
-          </FormControl>
-
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
+      <ThemeProvider theme={theme}>
+        <Card variant="outlined">
+          <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+            <img src='https://cdn.discordapp.com/attachments/1291289767597834311/1293095597171015742/ickle.png?ex=6706209e&is=6704cf1e&hm=57e3f7d9be7b491b9e48c393f02da107393a37581cb86ac6aa33927eb60c8141&' alt='' width='260' /></Box>
+          <Typography
+            component="h1"
+            variant="h4"
+            sx={{ width: '100%', fontSize: 'clamp(2rem, 10vw, 2.15rem)' }}
           >
-            Login
-          </Button>
-          <Typography variant='body1' color='#d32f2f' textAlign="center" component={'span'}>{loginErr}</Typography>
-        </Box>
-      </Card>
+            Sign in
+          </Typography>
+          <Box
+            component="form"
+            onSubmit={handleSubmit}
+            noValidate
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              width: '100%',
+              gap: 2,
+            }}
+          >
+            <FormControl>
+              <FormLabel htmlFor="email" sx={{marginBottom:'10px'}}>Email</FormLabel>
+              <TextField
+                error={emailError}
+                helperText={emailErrorMessage}
+                id="email"
+                type="email"
+                name="email"
+                placeholder="your@email.com"
+                autoComplete="email"
+                autoFocus
+                required
+                fullWidth
+                variant="outlined"
+                onChange={(e) => setEmail(e.target.value)}
+                color={emailError ? 'error' : 'primary'}
+                sx={{ ariaLabel: 'email' }}
+                value={email}
+
+              />
+            </FormControl>
+            <FormControl>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <FormLabel htmlFor="password" sx={{marginBottom:'10px'}}>Password</FormLabel>
+              </Box>
+              <TextField
+                error={passwordError}
+                helperText={passwordErrorMessage}
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                placeholder="••••••"
+                id="password"
+                autoComplete="current-password"
+                autoFocus
+                fullWidth
+                variant="outlined"
+                onChange={(e) => setPassword(e.target.value)}
+                value={password}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label="toggle password visibility"
+                        onClick={handleTogglePasswordVisibility}
+                        edge="end"
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+                color={passwordError ? 'error' : 'primary'}
+              />
+            </FormControl>
+
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              sx={{ backgroundColor: 'black' }}
+            >
+              Login
+            </Button>
+            <Typography variant='body1' color='#d32f2f' textAlign="center" component={'span'}>{loginErr}</Typography>
+          </Box>
+        </Card>
+      </ThemeProvider>
     </SignInContainer>
   );
 }
