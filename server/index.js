@@ -8,9 +8,11 @@ const router = require('./router/auth-routes')
 const UserAuthDb = require("./models/user-authenticate");
 const bcrypt = require('bcrypt');
 const { checkSessionUser } = require('./middlewares/isAuth');
+const bodyParser = require('body-parser');
 require("dotenv").config();
 
 app.use(express.json());
+app.use(bodyParser.json());
 
 app.use(session({
     secret: process.env.SESSION_SECRET,
