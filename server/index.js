@@ -8,6 +8,7 @@ const router = require('./router/auth-routes')
 const UserAuthDb = require("./models/user-authenticate");
 const bcrypt = require('bcrypt');
 const { checkSessionUser } = require('./middlewares/isAuth');
+require("dotenv").config();
 
 app.use(express.json());
 
@@ -15,9 +16,11 @@ app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: true,
-    store: mongoStore.create({ mongoUrl: process.env.MONGO_URL }),
-    cookie: { secure: true, maxAge: 86400000, httpOnly: true } // For 1 Day
+    store: mongoStore.create({ mongoUrl: process.env.DB_URI }),
+    cookie: { secure: false, maxAge: 86400000, httpOnly: true } // For 1 Day
 }));
+
+
 
 app.use(cors({
     origin: process.env.ORIGIN_URL,
@@ -148,7 +151,9 @@ app.get('/api/logout_admin', async (req, res) => {
     }
 });
 
-
+app.get('/', (req, res)=>{
+    res.send("Welocme to Server Ickle Bubba")
+});
 
 connectDb().then(() => {
     const port = 5000;
