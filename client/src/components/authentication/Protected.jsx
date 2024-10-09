@@ -1,30 +1,19 @@
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
-import { options, userCheck } from "../../services/apis";
 import { useEffect } from "react";
+import {useNavigate } from "react-router-dom";
 
 const Protected = ({ children }) => {
     const navigate = useNavigate();
 
-    const isUserLogged = async () => {
-        try {
-            const res = await axios.get(userCheck, options);
-            const user = res?.data;
-            console.log(user,"IIPOOI")
-            
-            if (!user?.user) {
-                navigate('/login', { replace: true }); 
-            }
-        } catch (error) {
-            console.error("Failed to check if user is logged in:", error);
-            navigate('/login', { replace: true });
-        }
-    };
+    const userIn = localStorage.getItem('token');
+
+    useEffect(()=>{
+        if(!userIn?.length){
+           navigate('/login');
+        };
+    }, []);
     
-    useEffect(() => {
-        isUserLogged();
-    }, []); 
+
     return children;
-}
+};
 
 export default Protected;

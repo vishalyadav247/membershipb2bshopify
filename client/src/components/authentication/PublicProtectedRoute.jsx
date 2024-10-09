@@ -13,7 +13,7 @@ const AuthProtected = ({ children }) => {
             console.log(from, "FROM???")
             navigate(`${from}`, { replace: true });
         };
-    }, [navigate]);
+    }, []);
     
 
     return children;
