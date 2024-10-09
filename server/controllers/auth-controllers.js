@@ -313,7 +313,7 @@ const createCompany = async (req, res) => {
         }
 
         // Assuming 'request' is your incoming object that includes the 'newsletter' field
-        if (request.newsletter === "on") {
+        if (request.newsletter === "TRUE") {
             // Define the GraphQL query and variables for updating email marketing consent
             const marketingConsentQuery = `
                 mutation customerEmailMarketingConsentUpdate($input: CustomerEmailMarketingConsentUpdateInput!) {
@@ -370,14 +370,14 @@ const createCompany = async (req, res) => {
             lastName: dbData.lastName,
             email: dbData.customerEmail,
             countryCode: dbData.countryCode,
-            dueDate: Math.floor(new Date(dbData.dueDate).getTime() / 1000),
+            dueDate: dbData.dueDate,
             relationship: dbData.relationship,
             customerId: dbData.customerId,
             companyId: dbData.companyId,
             locationId: dbData.locationId,
             companyRoleId: dbData.companyRoleId,
             companyContactId: dbData.companyContactId,
-            newsletter: dbData.newsletter === "on" ? true : false,
+            newsletter: dbData.newsletter,
             submittionDate: formatted,
         };
         const newEntry = new createCompanyDb(initialData);
