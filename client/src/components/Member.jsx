@@ -46,12 +46,12 @@ function Member() {
     setCurrentPage(1);
   };
 
-  const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:4000'; 
+  const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:5000';
 
   useEffect(() => {
     function hit() {
       fetch(`${baseURL}/api/get-users`)
-      .then(response => response.json())
+        .then(response => response.json())
         .then(data => {
           console.log(data)
           if (data.length > 0) {
@@ -234,12 +234,12 @@ function Member() {
 
   const convertToCSV = (data, columns) => {
     if (!data || data.length === 0) return '';
-  
+
     // Exclude "Sr. No." from columns, as we will add it manually
     const columnHeaders = columns
       .filter(col => col.title !== 'Sr No.')  // Filter out 'Sr No.' from columns
       .map(col => col.id);
-  
+
     const csvRows = [
       ['Sr No.', ...columns.filter(col => col.title !== 'Sr No.').map(col => col.title)].join(','), // Add "Sr No." manually to header
       ...data.map((row, index) =>
@@ -249,7 +249,7 @@ function Member() {
         ].join(',')
       )
     ];
-  
+
     return csvRows.join('\n');
   };
 
@@ -280,7 +280,7 @@ function Member() {
               <div className="col-lg-12">
                 <div className="d-flex justify-content-between align-items-center">
                   <div className="d-flex align-items-center gap-2">
-                    <span><Diversity3OutlinedIcon sx={{fontSize:"35px"}}/></span>
+                    <span><Diversity3OutlinedIcon sx={{ fontSize: "35px" }} /></span>
                     <span>
                       <h5 className="mb-0">Members</h5>
                     </span>
@@ -302,12 +302,20 @@ function Member() {
                         </button>
                       </div>
                     </div>
-                    <button
-                      className="btn btn-primary"
-                      onClick={handleExportCsv}
-                    >
-                      <i className="fas fa-file-export me-1"></i> Export Csv
-                    </button>
+                    <div>
+                      <button
+                        className="btn btn-primary me-2"
+                        onClick={handleExportCsv}
+                      >
+                        <i className="fas fa-file-export me-1"></i> Export Csv
+                      </button>
+                      <button
+                        className="btn btn-primary"
+                        onClick={handleExportCsv}
+                      >
+                        <i className="fas fa-file-export me-1"></i> Import Data
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -390,6 +398,7 @@ function Member() {
                           id="dropdownMenuButton"
                           data-bs-toggle="dropdown"
                           aria-expanded="false"
+                          style={{height:'100%'}}
                         >
                           <i className="fas fa-plus me-2"></i> Add Column
                         </button>
