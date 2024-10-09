@@ -19,28 +19,26 @@ const router = createBrowserRouter([
   {
     path: "/",
     element: (
-      <Protected>
-        <>
-          <AppHeader />
-          <Member />
-        </>
-      </Protected>
+      <>
+        <AppHeader />
+        <Member />
+      </>
     )
   },
   {
     path: "/change-password",
     element: (
-      <Protected>
+      <>
         <AppHeader />
         <PasswordChange />
-      </Protected>
+      </>
     )
   },
   {
     path: "/login",
     element: (
       <AuthProtected>
-        <Login />
+      <Login />
       </AuthProtected>
     )
   }

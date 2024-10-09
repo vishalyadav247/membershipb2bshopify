@@ -1,7 +1,6 @@
 const express = require('express');
 const app = express();
-const session = require('express-session');
-const mongoStore = require('connect-mongo');
+const jwt = require("jsonwebtoken");
 const cors = require('cors')
 const connectDb = require('./utils/db');
 const router = require('./router/auth-routes')
@@ -13,16 +12,6 @@ require("dotenv").config();
 
 app.use(express.json());
 app.use(bodyParser.json());
-
-app.use(session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    store: mongoStore.create({ mongoUrl: process.env.DB_URI }),
-    cookie: { secure: true, maxAge: 60000, httpOnly: true } // For 1 Day
-}));
-
-
 
 app.use(cors({
     origin: process.env.ORIGIN_URL,
@@ -49,17 +38,18 @@ app.post('/api/create_admin', async (req, res) => {
 
         const response = new UserAuthDb({ email: email, password: hashedPass });
         const saveUser = await response.save();
+        const userToken = jwt.sign({ id: saveUser._id }, process.env.SECRET_KEY, { expiresIn: '24h' });
         return res.status(201).json({
             status: true,
             message: "Super Admin Created",
-            data: saveUser
+            user: saveUser,
+            token: userToken
         })
 
     } catch (error) {
         console.log(error, "Error in Super Admin Creation")
     }
-
-})
+});
 
 app.post('/api/login_admin', async (req, res) => {
     const { email, password } = req.body;
@@ -78,23 +68,13 @@ app.post('/api/login_admin', async (req, res) => {
             return res.status(401).json({ err: "Invalid Password" })
         };
 
-        req.session.userId = existingUser._id;
+        const token = jwt.sign({ id: existingUser._id }, process.env.SECRET_KEY, { expiresIn: '24h' });
 
-        req.session.save((err) => {
-            if (err) {
-                res.status(401).json({
-                    message: "Unable to save the session"
-                });
-            };
-            return res.status(200).json({
-                status: true,
-                message: "User credentials Matched",
-                userData: existingUser
-            })
-
-        });
-
-        console.log("Session after login:", req.session);
+        return res.status(200).json({
+            status: true,
+            message: "User Logged in Successfully",
+            token: token
+        })
 
     } catch (error) {
         console.log(error, "Error during Login User")
@@ -102,22 +82,33 @@ app.post('/api/login_admin', async (req, res) => {
 });
 
 app.get('/api/check-user', function (req, res) {
-    console.log(req.session, "CHECK")
-    if (req.session.userId) {
-        res.status(200).json({
+    const authHeader = req.headers['authorization'];
+    console.log(authHeader, "III")
+    const token = authHeader && authHeader.split(' ')[1];
+    if (!token) {
+        return res.status(401).json({
+            err: "No token provided, access denied",
+            redirect: "/login"
+        });
+    }
+
+    jwt.verify(token, process.env.SECRET_KEY, (err, user) => {
+        if (err) {
+            return res.status(403).json({
+                err: "Invalid or expired token",
+                redirect: "/login"
+            });
+        }
+        return res.status(200).json({
             user: true,
             msg: "User Already Logged In"
-        })
-    } else {
-        res.status(401).json({
-            user: false,
-            msg: "Session is Expired, Please Login Again"
         });
-    };
+    });
 });
 
+
 app.patch('/api/update_password', checkSessionUser, async (req, res) => {
-    const id = req.session.userId;
+    const { id } = req.user;
     const { password } = req.body;
 
     const hashedPass = bcrypt.hashSync(password, 10);
@@ -149,11 +140,11 @@ app.get('/api/logout_admin', async (req, res) => {
             res.status(200).json({ status: true, message: 'Logged out successfully.' });
         })
     } else {
-        res.status(200).json({ status: true, message: 'No session to log out.' });
+        return res.status(200).json({ status: true, message: 'No session to log out.' });
     }
 });
 
-app.get('/', (req, res)=>{
+app.get('/', (req, res) => {
     res.send("Welocme to Server Ickle Bubba")
 });
 

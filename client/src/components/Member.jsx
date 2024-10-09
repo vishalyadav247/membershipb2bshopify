@@ -6,6 +6,7 @@ import MemberDetails from "./MemberDetails";
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Diversity3OutlinedIcon from '@mui/icons-material/Diversity3Outlined';
+import { useNavigate } from "react-router-dom";
 
 function Member() {
   const [columns, setColumns] = useState([]);
@@ -20,7 +21,8 @@ function Member() {
   const [columnWidths, setColumnWidths] = useState({});
   const [viewingCustomer, setViewingCustomer] = useState(null);
   const tableHeaderRef = useRef(null);
-  const gettingOptions = JSON.parse(localStorage.getItem('filterOptions'))
+  const gettingOptions = JSON.parse(localStorage.getItem('filterOptions'));
+  const navigate = useNavigate();
   const opt = {
     relationship: "null",
     filterMonth: "null",
@@ -46,12 +48,15 @@ function Member() {
   };
 
   const baseURL = process.env.REACT_APP_BASE_URL; 
+  const token = localStorage.getItem('token');
 
   useEffect(() => {
     function hit() {
       fetch(`${baseURL}/api/get-users`,{
         method:'GET',
-        credentials:'include'
+        headers:{
+          Authorization:`Bearer ${token}`
+        }
       })
       .then(response => response?.json())
         .then(data => {
@@ -89,6 +94,8 @@ function Member() {
         })
         .catch((err)=>{
           console.log(err,"Error in Getting Members");
+          navigate('/login');
+          
         })
       const savedWidths = JSON.parse(localStorage.getItem('columnWidths'));
       if (savedWidths) {

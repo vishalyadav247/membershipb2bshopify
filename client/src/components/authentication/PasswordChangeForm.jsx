@@ -11,7 +11,7 @@ import { createTheme, styled, ThemeProvider } from '@mui/material/styles';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { passwordChange } from '../../services/apis';
+import { options, passwordChange } from '../../services/apis';
 import LockPersonRoundedIcon from '@mui/icons-material/LockPersonRounded';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -106,9 +106,7 @@ export default function PasswordChange(props) {
 
         if (validateInputs()) {
             try {
-                const res = await axios.patch(passwordChange, changedPass, {
-                    withCredentials: true
-                });
+                const res = await axios.patch(passwordChange, changedPass, options);
                 const data = res ? res?.data : null;
                 const status = res ? res.status : 500;
 

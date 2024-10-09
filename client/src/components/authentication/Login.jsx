@@ -103,12 +103,9 @@ export default function Login(props) {
 
     if (validateInputs()) {
       try {
-        const res = await axios.post(loginApi, formData, {
-          withCredentials: true
-        });
+        const res = await axios.post(loginApi, formData);
         const data = res ? res?.data : null;
-
-        console.log(data, "-------->>>>>")
+        localStorage.setItem('token', data?.token);
         resetForm();
         navigate("/",{replace:true});
       } catch (error) {

@@ -67,25 +67,12 @@ export default function CustomizedMenus() {
     setAnchorEl(null);
   };
 
- const handleLogout = async() => {
-  try {
-    const res = await axios.get(logoutApi,{
-      withCredentials:true
-    });
-    const status = res ? res.status : 401;
-    if(status===200){
-      toast.success("Logged Out Successfully");
-      setTimeout(()=>{
-        navigate('/login', {replace:true});
-      }, 1000)
-    }
-
-    setAnchorEl(null);
-  } catch (error) {
-    console.log(error,"Logout API Error");
-    toast.warning("Logout Failed");
-  }
-
+ const handleLogout = () => {
+  localStorage.removeItem('token');
+  toast.warn('Logged Out Successfully')
+  setTimeout(()=>{
+    window.location.href='/login';
+  }, 1000)
  }
 
   const changePassword = () =>{

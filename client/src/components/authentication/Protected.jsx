@@ -1,6 +1,6 @@
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { userCheck } from "../../services/apis";
+import { options, userCheck } from "../../services/apis";
 import { useEffect } from "react";
 
 const Protected = ({ children }) => {
@@ -8,10 +8,10 @@ const Protected = ({ children }) => {
 
     const isUserLogged = async () => {
         try {
-            const res = await axios.get(userCheck, {
-                withCredentials: true
-            });
+            const res = await axios.get(userCheck, options);
             const user = res?.data;
+            console.log(user,"IIPOOI")
+            
             if (!user?.user) {
                 navigate('/login', { replace: true }); 
             }

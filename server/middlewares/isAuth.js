@@ -1,13 +1,29 @@
+const jwt = require('jsonwebtoken');
 
 function checkSessionUser(req, res, next) {
-    console.log("Session on protected route:", req.session);
-    if (!req.session.userId) {
-       return res.status(401).json({
+
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1]; 
+    if (!token) {
+        return res.status(401).json({
+            err: "No token provided, access denied",
             redirect: "/login"
         });
-    };
+    }
 
-    next(); 
+    jwt.verify(token, process.env.SECRET_KEY, (err, user) => {
+        if (err) {
+            return res.status(403).json({
+                err: "Invalid or expired token",
+                redirect: "/login"
+            });
+        }
+
+        req.user = user;
+
+        next(); 
+    });
 };
+
 
 module.exports = {checkSessionUser};
