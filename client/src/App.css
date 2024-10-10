@@ -592,3 +592,11 @@ input {
       transform: rotate(360deg);
     }
   }
+  .importCompany{
+    max-width: 233px;
+    border: 1px solid silver;
+    margin-right: 10px;
+    border-radius: 5px;
+    padding: 3px;
+    height: 100%;
+  }
