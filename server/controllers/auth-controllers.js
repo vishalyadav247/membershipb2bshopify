@@ -327,7 +327,7 @@ const createCompany = async (req, res) => {
                         }
                     }
                 }`;
-
+                
             const marketingConsentVariables = {
                 input: {
                     customerId: customerId,
@@ -580,5 +580,4 @@ const updateCustomer = async (req, res) => {
     }
 }
 
-module.exports = { createCompany, companyStatus, updateCompany, getCustomer, updateCustomer };
-
+module.exports = {createCompany,companyStatus,updateCompany, getCustomer, updateCustomer}; 
