@@ -9,6 +9,7 @@ router.post('/update-company',allControlers.updateCompany)
 
 router.get('/get-users', checkSessionUser, allControlers.getCustomer)
 router.put('/update-user/:id',allControlers.updateCustomer)
-// router.get('/get-users/:id', allControlers.getCustomerById)
+router.delete('/delete-enquiries',allControlers.deleteMultipleCompanies);
+router.delete('/delete-company/:id',allControlers.deleteCompany);
 
 module.exports = router; 

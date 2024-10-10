@@ -66,6 +66,19 @@ function MemberDetails({ customer, onBack }) {
         setIsReadOnly(true);
     }
 
+    const deleteCompany = async () => {
+        const userResponse = window.confirm("Are you sure you want to delete this company?");
+        if (userResponse) {
+            try {
+                await axios.delete(`${baseURL}/api/delete-company/${customer._id}`);
+                console.log('company deleted successfully')
+            } catch (error) {
+                console.log("error in deleting company", error)
+            }
+            onBack()
+        }
+    }
+
     useEffect(() => {
         console.log('useeffect')
         hit()
@@ -148,7 +161,7 @@ function MemberDetails({ customer, onBack }) {
                             <div className="detail-tab-box d-flex justify-content-between pb-2">
                                 <div></div>
                                 <div>
-                                    {!isReadOnly ? (<><button className="btn btn-outline-primary me-2 btn-sm" onClick={cancelEdit}>Cancel</button><button className="btn btn-primary me-2 saveBtn btn-sm" onClick={saveEnquiry}>Update</button></>) : (<><button className='btn btn-link me-2 updateBtn' onClick={editEnquiry}><i className="fa fa-edit"></i></button></>)}
+                                    {!isReadOnly ? (<><button className="btn btn-outline-primary me-2 btn-sm" onClick={cancelEdit}>Cancel</button><button className="btn btn-primary me-2 saveBtn btn-sm" onClick={saveEnquiry}>Update</button></>) : (<><button className='btn btn-link me-2 updateBtn' onClick={editEnquiry}><i className="fa fa-edit"></i></button><button className="btn btn-link text-danger me-2 deleteBtn" onClick={deleteCompany}><i className="fa fa-trash"></i></button></>)}
                                 </div>
                             </div>
                             <div className="two-column-layout">

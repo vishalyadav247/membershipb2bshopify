@@ -8,6 +8,7 @@ import Select from '@mui/material/Select';
 import Diversity3OutlinedIcon from '@mui/icons-material/Diversity3Outlined';
 import Papa from 'papaparse';
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 function Member() {
   const [columns, setColumns] = useState([]);
@@ -21,8 +22,8 @@ function Member() {
   const [rowsPerPage] = useState(20);
   const [columnWidths, setColumnWidths] = useState({});
   const [viewingCustomer, setViewingCustomer] = useState(null);
+  const [trigerUseeffectByDelete, setTrigerUseeffectByDelete] = useState(false);
   const tableHeaderRef = useRef(null);
-
   const [file, setFile] = useState(null);
 
   const gettingOptions = JSON.parse(localStorage.getItem('filterOptions'))
@@ -68,6 +69,7 @@ function Member() {
             const keys = Object.keys(data[0])?.filter(key => key !== '_id' && key !== '__v');
             const initialColumns = [
               { id: 'serialNumber', title: 'Sr No.' },
+              // { id: 'selectAll', title: 'Select All' },
               { id: 'submittionDate', title: 'Submittion Date' },
               { id: 'firstName', title: 'First Name' },
               { id: 'lastName', title: 'Last Name' },
@@ -108,7 +110,7 @@ function Member() {
     }
     hit()
     console.log('useeffect 1')
-  }, [viewingCustomer]);
+  }, [viewingCustomer, trigerUseeffectByDelete]);
 
   useEffect(() => {
     const filteredData = data.filter((item) => {
@@ -246,6 +248,26 @@ function Member() {
     return <MemberDetails customer={viewingCustomer} onBack={() => setViewingCustomer(null)} />;
   }
 
+  const deleteRowFromTable = async () => {
+    console.log(selectedRows);
+    let userResponseText = selectedRows.length === 0 ? "No data Selected" : `Are you sure you want to delete ${selectedRows.length} Enquiries?`;
+    const userResponse = window.confirm(userResponseText);
+    if (userResponse) {
+      try {
+        const response = await axios.delete(`${baseURL}/api/delete-enquiries`, {
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          data: { ids: selectedRows }
+        });
+        console.log(response.data);
+        setTrigerUseeffectByDelete(!trigerUseeffectByDelete)
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    }
+    setSelectedRows([])
+  }
 
   const convertToCSV = (data, columns) => {
     if (!data || data.length === 0) return '';
@@ -419,7 +441,7 @@ const formatDueDate = (timestamp) => {
                     </div>
                     <div className="d-flex">
                       <div>
-                        <input type="file" accept=".csv" onChange={handleFileChange} style={{maxWidth:"200px"}}/>
+                        <input type="file" accept=".csv" onChange={handleFileChange} className="importCompany"/>
                         <button
                           className="btn btn-primary"
                           onClick={handleImportCompany}
@@ -433,6 +455,10 @@ const formatDueDate = (timestamp) => {
                       >
                         <i className="fas fa-file-export me-1"></i> Export Csv
                       </button>
+                      {/* <button
+                        className="btn btn-primary add-customer-btn ms-2" onClick={deleteRowFromTable}>
+                        <i className="fa fa-trash"></i>
+                      </button> */}
                     </div>
                   </div>
                 </div>
