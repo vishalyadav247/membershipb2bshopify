@@ -7,6 +7,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Diversity3OutlinedIcon from '@mui/icons-material/Diversity3Outlined';
 import Papa from 'papaparse';
+import { useNavigate } from "react-router-dom";
 
 function Member() {
   const [columns, setColumns] = useState([]);
@@ -25,6 +26,7 @@ function Member() {
   const [file, setFile] = useState(null);
 
   const gettingOptions = JSON.parse(localStorage.getItem('filterOptions'))
+  const navigate = useNavigate();
   const opt = {
     relationship: "null",
     filterMonth: "null",
@@ -37,9 +39,9 @@ function Member() {
     if (searchValue !== '') {
       const filteredData = data.filter((item) => {
         return (
-          item.firstName.toLowerCase().includes(searchValue.toLowerCase()) ||
-          item.countryCode.toLowerCase().includes(searchValue.toLowerCase()) ||
-          item.email.toLowerCase().includes(searchValue.toLowerCase())
+          item?.firstName?.toLowerCase()?.includes(searchValue?.toLowerCase()) ||
+          item?.countryCode?.toLowerCase()?.includes(searchValue?.toLowerCase()) ||
+          item?.email?.toLowerCase()?.includes(searchValue?.toLowerCase())
         );
       });
       setFilteredResults(filteredData);
@@ -50,15 +52,20 @@ function Member() {
   };
 
   const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:5000';
+  const token = localStorage.getItem('token');
 
   useEffect(() => {
     function hit() {
-      fetch(`${baseURL}/api/get-users`)
-        .then(response => response.json())
+      fetch(`${baseURL}/api/get-users`,{
+        method:'GET',
+        headers:{
+          Authorization:`Bearer ${token}`
+        }
+      })
+      .then(response => response?.json())
         .then(data => {
-          console.log(data)
           if (data.length > 0) {
-            const keys = Object.keys(data[0]).filter(key => key !== '_id' && key !== '__v');
+            const keys = Object.keys(data[0])?.filter(key => key !== '_id' && key !== '__v');
             const initialColumns = [
               { id: 'serialNumber', title: 'Sr No.' },
               { id: 'submittionDate', title: 'Submittion Date' },
@@ -77,18 +84,23 @@ function Member() {
               setColumns(initialColumns);
             }
             const rowData = data.map((item, index) => ({ ...item, originalIndex: index }));
-            const enrichedData = [...rowData].reverse();
+            const enrichedData = [...rowData]?.reverse();
             setApiKeys(keys);
             setData(enrichedData);
             setFilteredResults(enrichedData);
           } else {
             const rowData = data.map((item, index) => ({ ...item, originalIndex: index }));
-            const enrichedData = [...rowData].reverse();
+            const enrichedData = [...rowData]?.reverse();
             setData(enrichedData);
             setFilteredResults(enrichedData);
             setSelectAll(!selectAll);
           }
-        });
+        })
+        .catch((err)=>{
+          console.log(err,"Error in Getting Members");
+          navigate('/login');
+          
+        })
       const savedWidths = JSON.parse(localStorage.getItem('columnWidths'));
       if (savedWidths) {
         setColumnWidths(savedWidths);
@@ -100,10 +112,10 @@ function Member() {
 
   useEffect(() => {
     const filteredData = data.filter((item) => {
-      const fromCondition = filterOptions.dateFrom ? new Date(item.dueDate) >= new Date(filterOptions.dateFrom) : true;
-      const relationshipCondition = filterOptions.relationship !== "null" ? item.relationship === filterOptions.relationship : true;
-      const toDateCondition = filterOptions.dateTo ? new Date(item.dueDate) <= new Date(filterOptions.dateTo) : true;
-      const monthYearCondition = filterOptions.filterMonth !== "null" ? compareMonthYear(item.dueDate, filterOptions.filterMonth) : true;
+      const fromCondition = filterOptions?.dateFrom ? new Date(item.dueDate) >= new Date(filterOptions?.dateFrom) : true;
+      const relationshipCondition = filterOptions?.relationship !== "null" ? item.relationship === filterOptions?.relationship : true;
+      const toDateCondition = filterOptions?.dateTo ? new Date(item.dueDate) <= new Date(filterOptions?.dateTo) : true;
+      const monthYearCondition = filterOptions?.filterMonth !== "null" ? compareMonthYear(item.dueDate, filterOptions?.filterMonth) : true;
 
       return fromCondition && relationshipCondition && toDateCondition && monthYearCondition === true;
     });
@@ -118,19 +130,19 @@ function Member() {
   const onDragEnd = (result) => {
     if (!result.destination) return;
     const updatedColumns = Array.from(columns);
-    const [reorderedColumn] = updatedColumns.splice(result.source.index, 1);
-    if (result.source.index !== 0 && result.source.index !== 1) {
-      updatedColumns.splice(result.destination.index, 0, reorderedColumn);
+    const [reorderedColumn] = updatedColumns?.splice(result.source.index, 1);
+    if (result?.source?.index !== 0 && result?.source?.index !== 1) {
+      updatedColumns.splice(result?.destination?.index, 0, reorderedColumn);
     }
     setColumns(updatedColumns);
     localStorage.setItem('columns', JSON.stringify(updatedColumns));
   };
 
   const handleToggleColumn = (key) => {
-    const columnExists = columns.find(column => column.id === key);
+    const columnExists = columns?.find(column => column.id === key);
     let updatedColumns;
     if (columnExists) {
-      updatedColumns = columns.filter(column => column.id !== key);
+      updatedColumns = columns?.filter(column => column.id !== key);
     } else {
       const newColumn = { id: key, title: key.charAt(0).toUpperCase() + key.slice(1) };
       updatedColumns = [...columns, newColumn];
@@ -175,7 +187,7 @@ function Member() {
 
   const indexOfLastRow = currentPage * rowsPerPage;
   const indexOfFirstRow = indexOfLastRow - rowsPerPage;
-  const currentRows = filteredResults.slice(indexOfFirstRow, indexOfLastRow);
+  const currentRows = filteredResults?.slice(indexOfFirstRow, indexOfLastRow);
   const totalPages = Math.ceil(filteredResults.length / rowsPerPage);
 
   const handlePrevPage = () => {
@@ -583,7 +595,7 @@ const formatDueDate = (timestamp) => {
                             )}
                           </Draggable>
                         ))}
-                        {provided.placeholder}
+                        {provided?.placeholder}
                       </tr>
                     )}
                   </Droppable>
