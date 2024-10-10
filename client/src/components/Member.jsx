@@ -6,6 +6,7 @@ import MemberDetails from "./MemberDetails";
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Diversity3OutlinedIcon from '@mui/icons-material/Diversity3Outlined';
+import Papa from 'papaparse';
 
 function Member() {
   const [columns, setColumns] = useState([]);
@@ -20,6 +21,8 @@ function Member() {
   const [columnWidths, setColumnWidths] = useState({});
   const [viewingCustomer, setViewingCustomer] = useState(null);
   const tableHeaderRef = useRef(null);
+
+  const [file, setFile] = useState(null);
 
   const gettingOptions = JSON.parse(localStorage.getItem('filterOptions'))
   const opt = {
@@ -46,12 +49,12 @@ function Member() {
     setCurrentPage(1);
   };
 
-  const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:4000'; 
+  const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:5000';
 
   useEffect(() => {
     function hit() {
       fetch(`${baseURL}/api/get-users`)
-      .then(response => response.json())
+        .then(response => response.json())
         .then(data => {
           console.log(data)
           if (data.length > 0) {
@@ -234,22 +237,34 @@ function Member() {
 
   const convertToCSV = (data, columns) => {
     if (!data || data.length === 0) return '';
-  
+
     // Exclude "Sr. No." from columns, as we will add it manually
     const columnHeaders = columns
       .filter(col => col.title !== 'Sr No.')  // Filter out 'Sr No.' from columns
       .map(col => col.id);
-  
-    const csvRows = [
-      ['Sr No.', ...columns.filter(col => col.title !== 'Sr No.').map(col => col.title)].join(','), // Add "Sr No." manually to header
-      ...data.map((row, index) =>
-        [
-          index + 1, // Add Sr. No. manually in the first column for each row
-          ...columnHeaders.map(field => `"${row[field] ? row[field].toString().replace(/"/g, '""') : ''}"`) // Map the remaining fields
-        ].join(',')
-      )
-    ];
-  
+
+      const csvRows = [
+        // Header Row
+        ['Sr No.', ...columns.filter(col => col.title !== 'Sr No.').map(col => col.title)].join(','),
+        // Data Rows
+        ...data.map((row, index) =>
+          [
+            index + 1, 
+            ...columnHeaders.map(field => {
+              let value = row[field];
+              if (field === 'dueDate') {
+                value = formatDueDate(value);
+              }
+              if (value == null) {
+                value = '';
+              }
+              value = value.toString().replace(/"/g, '""');
+              return `"${value}"`;
+            })
+          ].join(',')
+        )
+      ];
+
     return csvRows.join('\n');
   };
 
@@ -271,6 +286,94 @@ function Member() {
   };
 
 
+
+
+
+  const handleFileChange = (e) => {
+    setFile(e.target.files[0]);
+  };
+  const handleImportCompany = async () => {
+    if (!file) {
+      console.error('No file selected.');
+      return;
+    }
+
+    // Parse the CSV file
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: async function (results) {
+        const data = results.data;
+        let createdCount = 0;
+        let skippedCount = 0;
+
+        for (const entry of data) {
+          const formObject = { ...entry };
+          console.log('Processing:', formObject);
+
+          const checkStatus = await checkCustomerByEmail(formObject.customerEmail);
+
+          if (checkStatus === 200) {
+            try {
+              const response = await fetch(`${baseURL}/api/create-company`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formObject),
+              });
+              if (response.ok) {
+                createdCount++;
+                console.log(`Company created for email: ${formObject.customerEmail}`);
+              } else {
+                console.error(`Failed to create company for email: ${formObject.customerEmail}`);
+              }
+            } catch (error) {
+              console.error('Error in sending form data:', error);
+            }
+          } else {
+            skippedCount++;
+            console.log(`Email already exists, skipped: ${formObject.customerEmail}`);
+          }
+        }
+
+        console.log(`Import Summary: ${createdCount} companies created, ${skippedCount} emails skipped.`);
+      },
+      error: function (error) {
+        console.error('Error parsing CSV file:', error);
+      },
+    });
+  };
+ // Function to check customer status by email
+ const checkCustomerByEmail = async (email) => {
+  try {
+    const response = await fetch(`${baseURL}/api/get-company-status`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email: email }),
+    });
+    const data = await response.json();
+    return response.status; // Assuming response status indicates the result
+  } catch (error) {
+    console.log('Error fetching customer data:', error);
+    return null;
+  }
+};
+
+// function to convert the Unix timestamp (in seconds) to a human-readable date format.
+const formatDueDate = (timestamp) => {
+  if (isNaN(timestamp)) return 'NA';
+  const date = new Date(timestamp * 1000); // Convert seconds to milliseconds
+  const day = String(date.getDate()).padStart(2, '0'); // Ensures two digits
+  const month = String(date.getMonth() + 1).padStart(2, '0'); // Adjust for zero-indexed months
+  const year = date.getFullYear();
+  return `${day}-${month}-${year}`;
+};
+
+
+
+
+
   return (
     <div className="container-fluid customer-container">
       <div className="card card-block border-0 customer-table-css-main">
@@ -280,7 +383,7 @@ function Member() {
               <div className="col-lg-12">
                 <div className="d-flex justify-content-between align-items-center">
                   <div className="d-flex align-items-center gap-2">
-                    <span><Diversity3OutlinedIcon sx={{fontSize:"35px"}}/></span>
+                    <span><Diversity3OutlinedIcon sx={{ fontSize: "35px" }} /></span>
                     <span>
                       <h5 className="mb-0">Members</h5>
                     </span>
@@ -302,12 +405,23 @@ function Member() {
                         </button>
                       </div>
                     </div>
-                    <button
-                      className="btn btn-primary"
-                      onClick={handleExportCsv}
-                    >
-                      <i className="fas fa-file-export me-1"></i> Export Csv
-                    </button>
+                    <div className="d-flex">
+                      <div>
+                        <input type="file" accept=".csv" onChange={handleFileChange} style={{maxWidth:"200px"}}/>
+                        <button
+                          className="btn btn-primary"
+                          onClick={handleImportCompany}
+                        >
+                          <i className="fas fa-file-export me-1"></i> Import Data
+                        </button>
+                      </div>
+                      <button
+                        className="btn btn-primary ms-2"
+                        onClick={handleExportCsv}
+                      >
+                        <i className="fas fa-file-export me-1"></i> Export Csv
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -390,6 +504,7 @@ function Member() {
                           id="dropdownMenuButton"
                           data-bs-toggle="dropdown"
                           aria-expanded="false"
+                          style={{ height: '100%' }}
                         >
                           <i className="fas fa-plus me-2"></i> Add Column
                         </button>
@@ -520,7 +635,7 @@ function Member() {
                                     )}
                                   </div>
                                 ) : (
-                                  <span className={column.id}>{row[column.id]}</span>
+                                  <span className={column.id}> {column.id === 'dueDate' ? formatDueDate(row[column.id]) : row[column.id]} </span>
                                 )}
                               </td>
                             );
