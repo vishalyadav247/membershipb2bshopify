@@ -6,7 +6,7 @@ const url = process.env.STORE_GRAPHQL_URL;
 const createCompany = async (req, res) => {
     const request = await req.body;
     let otherData = {}
-    
+
     try {
         // Step 1: Check if the Customer Exists by Email
         const customerSearchQuery = `
@@ -348,18 +348,127 @@ const createCompany = async (req, res) => {
                 },
                 body: JSON.stringify({ query: marketingConsentQuery, variables: marketingConsentVariables })
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.errors) {
-                    console.error('Error updating marketing consent:', data.errors);
-                } else {
-                    console.log('Marketing consent updated successfully:', data.data.customerEmailMarketingConsentUpdate.customer);
-                }
-            })
-            .catch(error => {
-                console.error('Error sending request:', error);
-            });
+                .then(response => response.json())
+                .then(data => {
+                    if (data.errors) {
+                        console.error('Error updating marketing consent:', data.errors);
+                    } else {
+                        console.log('Marketing consent updated successfully:', data.data.customerEmailMarketingConsentUpdate.customer);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error sending request:', error);
+                });
         }
+
+        async function updateCustomerTags(customerId, newTag) {
+            // Step 1: Fetch the customer's existing tags
+            const getCustomerQuery = `
+                query getCustomer($id: ID!) {
+                    customer(id: $id) {
+                        id
+                        tags
+                    }
+                }`;
+
+            const getCustomerVariables = {
+                id: customerId
+            };
+
+            try {
+                let response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Shopify-Access-Token': accessToken
+                    },
+                    body: JSON.stringify({
+                        query: getCustomerQuery,
+                        variables: getCustomerVariables
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch customer tags: ${response.statusText}`);
+                }
+
+                let data = await response.json();
+
+                if (data.errors) {
+                    throw new Error(data.errors.map(e => e.message).join(', '));
+                }
+
+                if (!data.data || !data.data.customer) {
+                    throw new Error('Customer not found when fetching tags.');
+                }
+
+                const existingTags = data.data.customer.tags;
+
+                // Step 2: Append the new tag if it's not already present
+                if (!existingTags.includes(newTag)) {
+                    existingTags.push(newTag);
+                } else {
+                    console.log(`Customer already has the tag '${newTag}'.`);
+                    return; // No need to update if the tag already exists
+                }
+
+                // Step 3: Update the customer with the new tags
+                const updateCustomerTagsQuery = `
+                    mutation customerUpdate($input: CustomerInput!) {
+                        customerUpdate(input: $input) {
+                            customer {
+                                id
+                                tags
+                            }
+                            userErrors {
+                                field
+                                message
+                            }
+                        }
+                    }`;
+
+                const updateCustomerTagsVariables = {
+                    input: {
+                        id: customerId,
+                        tags: existingTags
+                    }
+                };
+
+                response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Shopify-Access-Token': accessToken
+                    },
+                    body: JSON.stringify({
+                        query: updateCustomerTagsQuery,
+                        variables: updateCustomerTagsVariables
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to update customer tags: ${response.statusText}`);
+                }
+
+                data = await response.json();
+
+                if (data.errors) {
+                    throw new Error(data.errors.map(e => e.message).join(', '));
+                }
+
+                if (data.data.customerUpdate.userErrors.length > 0) {
+                    throw new Error(data.data.customerUpdate.userErrors.map(e => e.message).join(', '));
+                }
+
+                console.log('Customer tags updated successfully:', data.data.customerUpdate.customer.tags);
+
+            } catch (error) {
+                console.error('Error updating customer tags:', error);
+                throw error; // Re-throw the error to be caught in the calling function
+            }
+        }
+
+        await updateCustomerTags(customerId, 'bubble');
 
         let dbData = { ...request, ...otherData };
         const date = new Date();
@@ -391,21 +500,21 @@ const createCompany = async (req, res) => {
 
 
 
-const companyStatus = async (req,res) => {
+const companyStatus = async (req, res) => {
     const request = await req.body;
     try {
-        const check = await createCompanyDb.findOne({email: request.email});
-        if(check != null){
-            res.status(401).json({message:'you are already subscribe, Please login', object:check});
-        }else{
-            res.status(200).json({message:'new email id'});
+        const check = await createCompanyDb.findOne({ email: request.email });
+        if (check != null) {
+            res.status(401).json({ message: 'you are already subscribe, Please login', object: check });
+        } else {
+            res.status(200).json({ message: 'new email id' });
         }
     } catch (error) {
-        return res.status(200).send({message:'error in checking email id',error:error})
+        return res.status(200).send({ message: 'error in checking email id', error: error })
     }
 }
 
-const updateCompany = async (req,res)=>{
+const updateCompany = async (req, res) => {
     let response = await req.body;
     try {
         const updatedEnquiry = await createCompanyDb.findByIdAndUpdate(
@@ -419,25 +528,25 @@ const updateCompany = async (req,res)=>{
             { new: true, runValidators: true } // Options to return the updated document and run validation
         );
         if (!updatedEnquiry) {
-            return res.status(404).json({message:'Enquiry not found'});
+            return res.status(404).json({ message: 'Enquiry not found' });
         }
 
-        res.status(200).json({message:'Enquiry updated successfully'});
+        res.status(200).json({ message: 'Enquiry updated successfully' });
     } catch (error) {
-        
+
     }
 
 }
 
-const getCustomer = async(req,res)=>{
+const getCustomer = async (req, res) => {
     try {
         let response = await createCompanyDb.find();
-        if(!response){
-            return res.status(404).send({message:'no user found'})
+        if (!response) {
+            return res.status(404).send({ message: 'no user found' })
         }
         return res.status(200).send(response)
     } catch (error) {
-        return res.status(500).send({message:'error in fetching users',error:error})
+        return res.status(500).send({ message: 'error in fetching users', error: error })
     }
 }
 
@@ -471,5 +580,5 @@ const updateCustomer = async (req, res) => {
     }
 }
 
-module.exports = {createCompany,companyStatus,updateCompany, getCustomer, updateCustomer}; 
+module.exports = { createCompany, companyStatus, updateCompany, getCustomer, updateCustomer };
 
