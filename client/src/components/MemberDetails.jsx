@@ -5,10 +5,10 @@ import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined
 
 function MemberDetails({ customer, onBack }) {
 
-    const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:5000'; 
+    const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:5000';
     const initialEditValues = {
         firstName: customer.firstName,
-        lastName:customer.lastName,
+        lastName: customer.lastName,
         phone: customer.phone,
         email: customer.email,
         address: customer.address,
@@ -118,6 +118,16 @@ function MemberDetails({ customer, onBack }) {
         }
     };
 
+    // function to convert the Unix timestamp (in seconds) to a human-readable date format.
+    const formatDueDate = (timestamp) => {
+        if (isNaN(timestamp)) return 'NA';
+        const date = new Date(timestamp * 1000); // Convert seconds to milliseconds
+        const day = String(date.getDate()).padStart(2, '0'); // Ensures two digits
+        const month = String(date.getMonth() + 1).padStart(2, '0'); // Adjust for zero-indexed months
+        const year = date.getFullYear();
+        return `${day}-${month}-${year}`;
+    };
+
     return (
         <div className="container-fluid customer-details mt-3">
             <div className="card mb-3">
@@ -169,7 +179,13 @@ function MemberDetails({ customer, onBack }) {
                                 <div className="second-column-box">
                                     <div>
                                         <div className="label-title">Due Date / Birth Date:</div>
-                                        <input type="date" className="label-value" onChange={(e) => handleChange('dueDate', e.target.value)} readOnly={isReadOnly} value={flyObject.dueDate} />
+                                        <input
+                                            type="date"
+                                            className="label-value"
+                                            onChange={(e) => handleChange('dueDate', new Date(e.target.value).getTime() / 1000)} // Convert back to Unix timestamp
+                                            readOnly={isReadOnly}
+                                            value={flyObject.dueDate ? new Date(flyObject.dueDate * 1000).toISOString().split('T')[0] : ''} // Convert Unix to YYYY-MM-DD format
+                                        />
                                     </div>
                                     <div>
                                         <div className="label-title">Relationship to little person :</div>
@@ -239,9 +255,9 @@ function MemberDetails({ customer, onBack }) {
                                     {editableValues.comments.map((comment, index) => (
                                         <div key={index} className="card mb-3">
                                             <div className="card-body p-2 pb-0">
-                                                
+
                                                 <div>
-                                                    <div className="comment-text mb-2"><pre style={{ fontFamily: "inherit",lineHeight:"20px" }}>{comment.comment_text}</pre></div>
+                                                    <div className="comment-text mb-2"><pre style={{ fontFamily: "inherit", lineHeight: "20px" }}>{comment.comment_text}</pre></div>
                                                     <hr className="m-0 mt-3" />
                                                     <div className="comment-timestamp d-flex justify-content-between align-items-baseline">
                                                         <div>

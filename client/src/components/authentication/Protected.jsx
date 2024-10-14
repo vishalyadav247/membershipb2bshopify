@@ -2,8 +2,8 @@ import { useEffect } from "react";
 import {useNavigate } from "react-router-dom";
 
 const Protected = ({ children }) => {
-    const navigate = useNavigate();
 
+    const navigate = useNavigate();
     const userIn = localStorage.getItem('token');
 
     useEffect(()=>{
@@ -12,7 +12,6 @@ const Protected = ({ children }) => {
         };
     }, []);
     
-
     return children;
 };
 

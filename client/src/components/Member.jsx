@@ -57,13 +57,13 @@ function Member() {
 
   useEffect(() => {
     function hit() {
-      fetch(`${baseURL}/api/get-users`,{
-        method:'GET',
-        headers:{
-          Authorization:`Bearer ${token}`
+      fetch(`${baseURL}/api/get-users`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`
         }
       })
-      .then(response => response?.json())
+        .then(response => response?.json())
         .then(data => {
           if (data.length > 0) {
             const keys = Object.keys(data[0])?.filter(key => key !== '_id' && key !== '__v');
@@ -98,10 +98,10 @@ function Member() {
             setSelectAll(!selectAll);
           }
         })
-        .catch((err)=>{
-          console.log(err,"Error in Getting Members");
+        .catch((err) => {
+          console.log(err, "Error in Getting Members");
           navigate('/login');
-          
+
         })
       const savedWidths = JSON.parse(localStorage.getItem('columnWidths'));
       if (savedWidths) {
@@ -114,9 +114,10 @@ function Member() {
 
   useEffect(() => {
     const filteredData = data.filter((item) => {
-      const fromCondition = filterOptions?.dateFrom ? new Date(item.dueDate) >= new Date(filterOptions?.dateFrom) : true;
+      const dueDate = new Date(item.dueDate * 1000);
+      const fromCondition = filterOptions?.dateFrom ? dueDate >= new Date(filterOptions?.dateFrom) : true;
+      const toDateCondition = filterOptions?.dateTo ? dueDate <= new Date(filterOptions?.dateTo) : true;
       const relationshipCondition = filterOptions?.relationship !== "null" ? item.relationship === filterOptions?.relationship : true;
-      const toDateCondition = filterOptions?.dateTo ? new Date(item.dueDate) <= new Date(filterOptions?.dateTo) : true;
       const monthYearCondition = filterOptions?.filterMonth !== "null" ? compareMonthYear(item.dueDate, filterOptions?.filterMonth) : true;
 
       return fromCondition && relationshipCondition && toDateCondition && monthYearCondition === true;
@@ -238,11 +239,12 @@ function Member() {
     })
   }
   function compareMonthYear(itemDate, monthYearStr) {
-    const date = new Date(itemDate);
+    const date = new Date(itemDate * 1000); 
     const [month, year] = monthYearStr.split('_');
     const monthIndex = new Date(`${month} 1, 2022`).getMonth();
     return date.getFullYear() === parseInt(year) && date.getMonth() === monthIndex;
   }
+  
 
   if (viewingCustomer) {
     return <MemberDetails customer={viewingCustomer} onBack={() => setViewingCustomer(null)} />;
@@ -277,27 +279,27 @@ function Member() {
       .filter(col => col.title !== 'Sr No.')  // Filter out 'Sr No.' from columns
       .map(col => col.id);
 
-      const csvRows = [
-        // Header Row
-        ['Sr No.', ...columns.filter(col => col.title !== 'Sr No.').map(col => col.title)].join(','),
-        // Data Rows
-        ...data.map((row, index) =>
-          [
-            index + 1, 
-            ...columnHeaders.map(field => {
-              let value = row[field];
-              if (field === 'dueDate') {
-                value = formatDueDate(value);
-              }
-              if (value == null) {
-                value = '';
-              }
-              value = value.toString().replace(/"/g, '""');
-              return `"${value}"`;
-            })
-          ].join(',')
-        )
-      ];
+    const csvRows = [
+      // Header Row
+      ['Sr No.', ...columns.filter(col => col.title !== 'Sr No.').map(col => col.title)].join(','),
+      // Data Rows
+      ...data.map((row, index) =>
+        [
+          index + 1,
+          ...columnHeaders.map(field => {
+            let value = row[field];
+            if (field === 'dueDate') {
+              value = formatDueDate(value);
+            }
+            if (value == null) {
+              value = '';
+            }
+            value = value.toString().replace(/"/g, '""');
+            return `"${value}"`;
+          })
+        ].join(',')
+      )
+    ];
 
     return csvRows.join('\n');
   };
@@ -318,10 +320,6 @@ function Member() {
     link.click();
     document.body.removeChild(link);
   };
-
-
-
-
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
@@ -376,34 +374,57 @@ function Member() {
       },
     });
   };
- // Function to check customer status by email
- const checkCustomerByEmail = async (email) => {
-  try {
-    const response = await fetch(`${baseURL}/api/get-company-status`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email: email }),
-    });
-    const data = await response.json();
-    return response.status; // Assuming response status indicates the result
-  } catch (error) {
-    console.log('Error fetching customer data:', error);
-    return null;
+  // Function to check customer status by email
+  const checkCustomerByEmail = async (email) => {
+    try {
+      const response = await fetch(`${baseURL}/api/get-company-status`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: email }),
+      });
+      const data = await response.json();
+      return response.status; // Assuming response status indicates the result
+    } catch (error) {
+      console.log('Error fetching customer data:', error);
+      return null;
+    }
+  };
+
+  // function to convert the Unix timestamp (in seconds) to a human-readable date format.
+  const formatDueDate = (timestamp) => {
+    console.log(typeof timestamp)
+    if (isNaN(timestamp)) return 'NA';
+    const date = new Date(timestamp * 1000); 
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+  };
+
+  function getNext12Months() {
+    const months = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ];
+
+    const currentDate = new Date();
+    const next12Months = [];
+
+    for (let i = 0; i < 12; i++) {
+      const currentMonth = currentDate.getMonth() + i;
+      const monthIndex = currentMonth % 12;
+      const year = currentDate.getFullYear() + Math.floor(currentMonth / 12);
+
+      next12Months.push({
+        value: `${months[monthIndex].toLowerCase()}_${year}`,
+        label: `${months[monthIndex]} ${year}`
+      });
+    }
+
+    return next12Months;
   }
-};
-
-// function to convert the Unix timestamp (in seconds) to a human-readable date format.
-const formatDueDate = (timestamp) => {
-  if (isNaN(timestamp)) return 'NA';
-  const date = new Date(timestamp * 1000); // Convert seconds to milliseconds
-  const day = String(date.getDate()).padStart(2, '0'); // Ensures two digits
-  const month = String(date.getMonth() + 1).padStart(2, '0'); // Adjust for zero-indexed months
-  const year = date.getFullYear();
-  return `${day}-${month}-${year}`;
-};
-
 
 
 
@@ -434,6 +455,7 @@ const formatDueDate = (timestamp) => {
                         <button
                           className="btn border border-start-0 search-icon-custom"
                           type="button"
+                          style={{ height: '100%' }}
                         >
                           <i className="fa fa-search"></i>
                         </button>
@@ -441,7 +463,7 @@ const formatDueDate = (timestamp) => {
                     </div>
                     <div className="d-flex">
                       <div>
-                        <input type="file" accept=".csv" onChange={handleFileChange} className="importCompany"/>
+                        <input type="file" accept=".csv" onChange={handleFileChange} className="importCompany" />
                         <button
                           className="btn btn-primary"
                           onClick={handleImportCompany}
@@ -513,17 +535,11 @@ const formatDueDate = (timestamp) => {
                           onChange={(e) => { setFilterOptions({ ...filterOptions, filterMonth: e.target.value }) }}
                         >
                           <MenuItem value="null" disabled>Month</MenuItem>
-                          <MenuItem value="september_2024">September 2024</MenuItem>
-                          <MenuItem value="november_2024">November 2024</MenuItem>
-                          <MenuItem value="december_2024">December 2024</MenuItem>
-                          <MenuItem value="january_2024">January 2024</MenuItem>
-                          <MenuItem value="february_2024">February 2024</MenuItem>
-                          <MenuItem value="march_2024">March 2024</MenuItem>
-                          <MenuItem value="april_2024">april 2024</MenuItem>
-                          <MenuItem value="may_2024">May 2024</MenuItem>
-                          <MenuItem value="june_2024">June 2024</MenuItem>
-                          <MenuItem value="july_2024">July 2024</MenuItem>
-                          <MenuItem value="august_2024">August 2024</MenuItem>
+                          {getNext12Months().map((month) => (
+                            <MenuItem key={month.value} value={month.value}>
+                              {month.label}
+                            </MenuItem>
+                          ))}
                         </Select>
                       </div>
                       <div>
@@ -548,15 +564,17 @@ const formatDueDate = (timestamp) => {
                         </button>
                         <ul className="dropdown-menu addCol" aria-labelledby="dropdownMenuButton">
                           {apiKeys.map((key) => (
-                            <li key={key}>
-                              <label className="dropdown-item">
-                                <input
-                                  type="checkbox"
-                                  onChange={() => handleToggleColumn(key)}
-                                  checked={columns.some(column => column.id === key)}
-                                /> {key}
-                              </label>
-                            </li>
+                            !["companyId", "locationId", "companyRoleId", "companyContactId"].includes(key) && ( // Only render if key is not "firstName"
+                              <li key={key}>
+                                <label className="dropdown-item">
+                                  <input
+                                    type="checkbox"
+                                    onChange={() => handleToggleColumn(key)}
+                                    checked={columns.some(column => column.id === key)}
+                                  /> {key}
+                                </label>
+                              </li>
+                            )
                           ))}
                         </ul>
                       </div>
