@@ -11,7 +11,6 @@ import { createTheme, styled, ThemeProvider } from '@mui/material/styles';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { passwordChange } from '../../services/apis';
 import LockPersonRoundedIcon from '@mui/icons-material/LockPersonRounded';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -93,7 +92,7 @@ export default function PasswordChange(props) {
     const [showPassword, setShowPassword] = useState(false);
     const [showconfirmPassword, setShowconfirmPassword] = useState(false);
 
-
+    const serverUrl = process.env.REACT_APP_SERVER_URL || 'http://localhost:5000';
 
     const navigate = useNavigate();
 
@@ -101,18 +100,18 @@ export default function PasswordChange(props) {
         event.preventDefault();;
 
         const changedPass = {
-            password: password,
-        };
-
-        const options2 = {
-            headers:{
-                Authorization:`Bearer ${localStorage.getItem('token')}`
-            }
+            newPassword: password,
         };
 
         if (validateInputs()) {
             try {
-                const res = await axios.patch(passwordChange, changedPass, options2);
+                const res = await axios.put(`${serverUrl}/api/change-password`, changedPass,{
+                    headers: {
+                      "Content-Type": "application/json"
+                    },
+                    withCredentials: true
+                  }
+                  );
                 const data = res ? res?.data : null;
                 const status = res ? res.status : 500;
 
@@ -129,7 +128,6 @@ export default function PasswordChange(props) {
                 console.log(error, "Change Password API Error");
                 setApiError("Cannot change Password now due to server error");
             }
-
         }
     };
 

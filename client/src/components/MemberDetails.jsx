@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
-// import { useNotification } from "./NotificationContext";
+import { toast } from "react-toastify";
 
 function MemberDetails({ customer, onBack }) {
 
-    const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:5000'; 
+    const serverUrl = process.env.REACT_APP_SERVER_URL || 'http://localhost:5000';
     const initialEditValues = {
         firstName: customer.firstName,
-        lastName:customer.lastName,
+        lastName: customer.lastName,
         phone: customer.phone,
         email: customer.email,
         address: customer.address,
@@ -70,7 +70,7 @@ function MemberDetails({ customer, onBack }) {
         const userResponse = window.confirm("Are you sure you want to delete this company?");
         if (userResponse) {
             try {
-                await axios.delete(`${baseURL}/api/delete-company/${customer._id}`);
+                await axios.delete(`${serverUrl}/api/delete-company/${customer._id}`);
                 console.log('company deleted successfully')
             } catch (error) {
                 console.log("error in deleting company", error)
@@ -92,8 +92,8 @@ function MemberDetails({ customer, onBack }) {
                     'Content-Type': 'application/json'
                 }
             };
-            const response = await axios.put(`${baseURL}/api/update-user/${customer._id}`, editableValues, config);
-            console.log(response.data);
+            const response = await axios.put(`${serverUrl}/api/update-user/${customer._id}`, editableValues, config);
+            toast.success(response.data)
         } catch (error) {
             console.log('Error sending PUT request', error);
         }
@@ -116,6 +116,16 @@ function MemberDetails({ customer, onBack }) {
         } else {
             //   showNotification("Can't be blank!", "error", "red", "white");
         }
+    };
+
+    // function to convert the Unix timestamp (in seconds) to a human-readable date format.
+    const formatDueDate = (timestamp) => {
+        if (isNaN(timestamp)) return 'NA';
+        const date = new Date(timestamp * 1000); // Convert seconds to milliseconds
+        const day = String(date.getDate()).padStart(2, '0'); // Ensures two digits
+        const month = String(date.getMonth() + 1).padStart(2, '0'); // Adjust for zero-indexed months
+        const year = date.getFullYear();
+        return `${day}-${month}-${year}`;
     };
 
     return (
@@ -169,7 +179,13 @@ function MemberDetails({ customer, onBack }) {
                                 <div className="second-column-box">
                                     <div>
                                         <div className="label-title">Due Date / Birth Date:</div>
-                                        <input type="date" className="label-value" onChange={(e) => handleChange('dueDate', e.target.value)} readOnly={isReadOnly} value={flyObject.dueDate} />
+                                        <input
+                                            type="date"
+                                            className="label-value"
+                                            onChange={(e) => handleChange('dueDate', new Date(e.target.value).getTime() / 1000)} // Convert back to Unix timestamp
+                                            readOnly={isReadOnly}
+                                            value={flyObject.dueDate ? new Date(flyObject.dueDate * 1000).toISOString().split('T')[0] : ''} // Convert Unix to YYYY-MM-DD format
+                                        />
                                     </div>
                                     <div>
                                         <div className="label-title">Relationship to little person :</div>
@@ -239,9 +255,9 @@ function MemberDetails({ customer, onBack }) {
                                     {editableValues.comments.map((comment, index) => (
                                         <div key={index} className="card mb-3">
                                             <div className="card-body p-2 pb-0">
-                                                
+
                                                 <div>
-                                                    <div className="comment-text mb-2"><pre style={{ fontFamily: "inherit",lineHeight:"20px" }}>{comment.comment_text}</pre></div>
+                                                    <div className="comment-text mb-2"><pre style={{ fontFamily: "inherit", lineHeight: "20px" }}>{comment.comment_text}</pre></div>
                                                     <hr className="m-0 mt-3" />
                                                     <div className="comment-timestamp d-flex justify-content-between align-items-baseline">
                                                         <div>

@@ -1,11 +1,10 @@
 import AppHeader from './components/AppHeader';
 import Login from './components/authentication/Login';
 import PasswordChange from './components/authentication/PasswordChangeForm';
-import Protected from './components/authentication/Protected';
-import AuthProtected from './components/authentication/PublicProtectedRoute';
 import Member from './components/Member';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+import AuthGuard from './components/authentication/userProtected';
 
 const theme = createTheme({
   typography: {
@@ -19,27 +18,25 @@ const router = createBrowserRouter([
   {
     path: "/",
     element: (
-      <Protected>
+      <AuthGuard>
         <AppHeader />
         <Member />
-      </Protected>
+      </AuthGuard>
     )
   },
   {
     path: "/change-password",
     element: (
-      <Protected>
+      <AuthGuard>
         <AppHeader />
         <PasswordChange />
-      </Protected>
+      </AuthGuard>
     )
   },
   {
     path: "/login",
     element: (
-      <AuthProtected>
       <Login />
-      </AuthProtected>
     )
   }
 ])
