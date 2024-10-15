@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
-// import { useNotification } from "./NotificationContext";
+import { toast } from "react-toastify";
 
 function MemberDetails({ customer, onBack }) {
 
-    const baseURL = process.env.REACT_APP_BASE_URL || 'http://localhost:5000';
+    const serverUrl = process.env.REACT_APP_SERVER_URL || 'http://localhost:5000';
     const initialEditValues = {
         firstName: customer.firstName,
         lastName: customer.lastName,
@@ -70,7 +70,7 @@ function MemberDetails({ customer, onBack }) {
         const userResponse = window.confirm("Are you sure you want to delete this company?");
         if (userResponse) {
             try {
-                await axios.delete(`${baseURL}/api/delete-company/${customer._id}`);
+                await axios.delete(`${serverUrl}/api/delete-company/${customer._id}`);
                 console.log('company deleted successfully')
             } catch (error) {
                 console.log("error in deleting company", error)
@@ -92,8 +92,8 @@ function MemberDetails({ customer, onBack }) {
                     'Content-Type': 'application/json'
                 }
             };
-            const response = await axios.put(`${baseURL}/api/update-user/${customer._id}`, editableValues, config);
-            console.log(response.data);
+            const response = await axios.put(`${serverUrl}/api/update-user/${customer._id}`, editableValues, config);
+            toast.success(response.data)
         } catch (error) {
             console.log('Error sending PUT request', error);
         }

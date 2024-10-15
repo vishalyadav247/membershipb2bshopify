@@ -9,6 +9,8 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import { useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import axios from 'axios';
+const serverUrl = process.env.REACT_APP_SERVER_URL || 'http://localhost:5000';
 
 const StyledMenu = styled((props) => (
   <Menu
@@ -61,26 +63,31 @@ export default function CustomizedMenus() {
     setAnchorEl(event.currentTarget);
   };
 
-  const handleClose =() =>{
+  const handleClose = () => {
     setAnchorEl(null);
   };
 
- const handleLogout = () => {
-  localStorage.removeItem('token');
-  toast.warn('Logged Out Successfully')
-  setTimeout(()=>{
-    window.location.href='/login';
-  }, 1000)
- }
+  const handleLogout = async () => {
+    try {
+      await axios.post(`${serverUrl}/api/logout`, {}, { withCredentials: true });
+      toast.warn('Logged Out Successfully');
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 1000);
+    } catch (error) {
+      console.error('Logout Error:', error);
+      toast.error('Error logging out. Please try again.');
+    }
+  };
 
-  const changePassword = () =>{
+  const changePassword = () => {
     navigate('/change-password')
     setAnchorEl(null);
   };
 
   return (
     <div>
-       <ToastContainer position='top-right' />
+      <ToastContainer position='top-right' />
       <Button
         id="demo-customized-button"
         aria-controls={open ? 'demo-customized-menu' : undefined}
@@ -104,7 +111,7 @@ export default function CustomizedMenus() {
       >
         <MenuItem onClick={changePassword} disableRipple>
           <EditIcon />
-         Change Password
+          Change Password
         </MenuItem>
         <MenuItem onClick={handleLogout} disableRipple>
           <LogoutIcon />

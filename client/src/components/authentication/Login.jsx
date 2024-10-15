@@ -11,12 +11,14 @@ import { styled } from '@mui/material/styles';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { loginApi } from '../../services/apis';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { IconButton, InputAdornment } from '@mui/material';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import logo from '../../images/ickle.png';
+import { toast } from 'react-toastify';
+
+const serverUrl = process.env.REACT_APP_SERVER_URL || 'http://localhost:5000';
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: 'flex',
@@ -104,11 +106,18 @@ export default function Login(props) {
 
     if (validateInputs()) {
       try {
-        const res = await axios.post(loginApi, formData);
-        const data = res ? res?.data : null;
-        localStorage.setItem('token', data?.token);
+        const response = await axios.post(`${serverUrl}/api/user-login`, formData, {
+          headers: {
+            "Content-Type": "application/json"
+          },
+          withCredentials: true
+        }
+        )
         resetForm();
-        navigate("/",{replace:true});
+        if (response.status === 200) {
+          navigate("/");
+          toast.success('Logged Out Successfully');
+        }
       } catch (error) {
         console.log(error, "Login API Error");
         setLoginErr("Invalid credentials email and password");
@@ -182,7 +191,7 @@ export default function Login(props) {
             }}
           >
             <FormControl>
-              <FormLabel htmlFor="email" sx={{marginBottom:'10px'}}>Email</FormLabel>
+              <FormLabel htmlFor="email" sx={{ marginBottom: '10px' }}>Email</FormLabel>
               <TextField
                 error={emailError}
                 helperText={emailErrorMessage}
@@ -204,7 +213,7 @@ export default function Login(props) {
             </FormControl>
             <FormControl>
               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <FormLabel htmlFor="password" sx={{marginBottom:'10px'}}>Password</FormLabel>
+                <FormLabel htmlFor="password" sx={{ marginBottom: '10px' }}>Password</FormLabel>
               </Box>
               <TextField
                 error={passwordError}
