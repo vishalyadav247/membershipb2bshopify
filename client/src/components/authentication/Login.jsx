@@ -16,7 +16,7 @@ import { IconButton, InputAdornment } from '@mui/material';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import logo from '../../images/ickle.png';
-import { toast } from 'react-toastify';
+import { ToastContainer, toast } from 'react-toastify';
 
 const serverUrl = process.env.REACT_APP_SERVER_URL || 'http://localhost:5000';
 
@@ -115,8 +115,10 @@ export default function Login(props) {
         )
         resetForm();
         if (response.status === 200) {
-          navigate("/");
-          toast.success('Logged Out Successfully');
+          toast.success('Logged In Successfully');
+          setTimeout(()=>{
+            navigate("/");
+          },700)
         }
       } catch (error) {
         console.log(error, "Login API Error");
@@ -167,96 +169,104 @@ export default function Login(props) {
   };
 
   return (
-    <SignInContainer direction="column" justifyContent="space-between" height="100vh" >
-      <ThemeProvider theme={theme}>
-        <Card variant="outlined">
-          <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-            <img src={logo} alt='' width='260' /></Box>
-          <Typography
-            component="h1"
-            variant="h4"
-            sx={{ width: '100%', fontSize: 'clamp(2rem, 10vw, 2.15rem)' }}
-          >
-            Sign in
-          </Typography>
-          <Box
-            component="form"
-            onSubmit={handleSubmit}
-            noValidate
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              width: '100%',
-              gap: 2,
-            }}
-          >
-            <FormControl>
-              <FormLabel htmlFor="email" sx={{ marginBottom: '10px' }}>Email</FormLabel>
-              <TextField
-                error={emailError}
-                helperText={emailErrorMessage}
-                id="email"
-                type="email"
-                name="email"
-                placeholder="your@email.com"
-                autoComplete="email"
-                autoFocus
-                required
-                fullWidth
-                variant="outlined"
-                onChange={(e) => setEmail(e.target.value)}
-                color={emailError ? 'error' : 'primary'}
-                sx={{ ariaLabel: 'email' }}
-                value={email}
+    <>
+      <ToastContainer
+        position="top-right"
+        autoClose={600}
+        theme="light"
+      />
 
-              />
-            </FormControl>
-            <FormControl>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <FormLabel htmlFor="password" sx={{ marginBottom: '10px' }}>Password</FormLabel>
-              </Box>
-              <TextField
-                error={passwordError}
-                helperText={passwordErrorMessage}
-                type={showPassword ? 'text' : 'password'}
-                name="password"
-                placeholder="••••••"
-                id="password"
-                autoComplete="current-password"
-                autoFocus
-                fullWidth
-                variant="outlined"
-                onChange={(e) => setPassword(e.target.value)}
-                value={password}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        aria-label="toggle password visibility"
-                        onClick={handleTogglePasswordVisibility}
-                        edge="end"
-                      >
-                        {showPassword ? <VisibilityOff /> : <Visibility />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-                color={passwordError ? 'error' : 'primary'}
-              />
-            </FormControl>
-
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              sx={{ backgroundColor: 'black' }}
+      <SignInContainer direction="column" justifyContent="space-between" height="100vh" >
+        <ThemeProvider theme={theme}>
+          <Card variant="outlined">
+            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+              <img src={logo} alt='' width='260' /></Box>
+            <Typography
+              component="h1"
+              variant="h4"
+              sx={{ width: '100%', fontSize: 'clamp(2rem, 10vw, 2.15rem)' }}
             >
-              Login
-            </Button>
-            <Typography variant='body1' color='#d32f2f' textAlign="center" component={'span'}>{loginErr}</Typography>
-          </Box>
-        </Card>
-      </ThemeProvider>
-    </SignInContainer>
+              Sign in
+            </Typography>
+            <Box
+              component="form"
+              onSubmit={handleSubmit}
+              noValidate
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                width: '100%',
+                gap: 2,
+              }}
+            >
+              <FormControl>
+                <FormLabel htmlFor="email" sx={{ marginBottom: '10px' }}>Email</FormLabel>
+                <TextField
+                  error={emailError}
+                  helperText={emailErrorMessage}
+                  id="email"
+                  type="email"
+                  name="email"
+                  placeholder="your@email.com"
+                  autoComplete="email"
+                  autoFocus
+                  required
+                  fullWidth
+                  variant="outlined"
+                  onChange={(e) => setEmail(e.target.value)}
+                  color={emailError ? 'error' : 'primary'}
+                  sx={{ ariaLabel: 'email' }}
+                  value={email}
+
+                />
+              </FormControl>
+              <FormControl>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <FormLabel htmlFor="password" sx={{ marginBottom: '10px' }}>Password</FormLabel>
+                </Box>
+                <TextField
+                  error={passwordError}
+                  helperText={passwordErrorMessage}
+                  type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  placeholder="••••••"
+                  id="password"
+                  autoComplete="current-password"
+                  autoFocus
+                  fullWidth
+                  variant="outlined"
+                  onChange={(e) => setPassword(e.target.value)}
+                  value={password}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          aria-label="toggle password visibility"
+                          onClick={handleTogglePasswordVisibility}
+                          edge="end"
+                        >
+                          {showPassword ? <VisibilityOff /> : <Visibility />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                  color={passwordError ? 'error' : 'primary'}
+                />
+              </FormControl>
+
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                sx={{ backgroundColor: 'black' }}
+              >
+                Login
+              </Button>
+              <Typography variant='body1' color='#d32f2f' textAlign="center" component={'span'}>{loginErr}</Typography>
+            </Box>
+          </Card>
+        </ThemeProvider>
+      </SignInContainer>
+    </>
   );
 }

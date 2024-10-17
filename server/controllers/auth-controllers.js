@@ -1,7 +1,7 @@
 require('dotenv').config();
 const bcrypt = require("bcryptjs");
 
-const {User,createCompanyDb} = require('../models/user-models')
+const { User, createCompanyDb } = require('../models/user-models')
 const accessToken = process.env.STORE_API_PASSWORD;
 const url = process.env.STORE_GRAPHQL_URL;
 
@@ -10,8 +10,6 @@ const createCompany = async (req, res) => {
     let baseEmail = request.customerEmail;
     let newEmail = baseEmail.toLowerCase()
     request.customerEmail = newEmail;
-    let baseFirstName = request.firstName;
-    let modififiedFirstName = baseFirstName.replace(" ","-");
     let otherData = {}
 
     try {
@@ -175,7 +173,7 @@ const createCompany = async (req, res) => {
             input: {
                 company: {
                     name: request.firstName,
-                    externalId: modififiedFirstName
+                    externalId: customerId
                 },
                 companyLocation: {
                     name: request.firstName,
@@ -334,12 +332,60 @@ const createCompany = async (req, res) => {
                         }
                     }
                 }`;
-                
+
+            function convertNewsletterTime(unixTime) {
+                // Convert unixTime from seconds to milliseconds
+                const dateObj = new Date(request.newsletterTimestamp ? unixTime * 1000 : unixTime );
+
+                // Get the date components in the 'America/New_York' timezone
+                const options = {
+                    timeZone: 'America/New_York',
+                    hour12: false,
+                    year: 'numeric',
+                    month: '2-digit', // Ensures leading zeros
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                };
+
+                const formatter = new Intl.DateTimeFormat('en-US', options);
+                const parts = formatter.formatToParts(dateObj);
+
+                const dateParts = {};
+                parts.forEach(part => {
+                    if (part.type !== 'literal') {
+                        dateParts[part.type] = part.value;
+                    }
+                });
+
+                // Extract and parse the date components
+                const year = parseInt(dateParts.year, 10);
+                const month = parseInt(dateParts.month, 10); // Months are 1-12
+                const day = parseInt(dateParts.day, 10);
+                const hour = parseInt(dateParts.hour, 10);
+                const minute = parseInt(dateParts.minute, 10); // Incorrect, should be dateParts.minute
+                const second = parseInt(dateParts.second, 10);
+
+                // CorrectCreate a UTC timestamp corresponding to the 'America/New_York' time
+                const nyDateUTC = Date.UTC(year, month - 1, day, hour, minute, second);
+
+                // Create a Date object from the UTC timestamp
+                const utcDate = new Date(nyDateUTC);
+
+                // Format the UTC time as an ISO string without milliseconds
+                const formattedDate = utcDate.toISOString().split('.')[0] + 'Z';
+
+                return formattedDate;
+            }
+
+            const newsletterTime = convertNewsletterTime(request.newsletterTimestamp ? Number(request.newsletterTimestamp) : Date.now());
+            console.log(newsletterTime)
             const marketingConsentVariables = {
                 input: {
                     customerId: customerId,
                     emailMarketingConsent: {
-                        consentUpdatedAt: "2019-09-07T15:50:00Z", // Update the timestamp to the current time
+                        consentUpdatedAt: newsletterTime, // Update the timestamp to the current time
                         marketingOptInLevel: "CONFIRMED_OPT_IN",
                         marketingState: "SUBSCRIBED"
                     }
@@ -710,12 +756,12 @@ const userLogin = async (req, res) => {
 
                 const token = await userValid.generateToken();
                 res.cookie("userCookie", token, {
-                    expires: new Date(Date.now() + 24 * 60 * 60 * 1000), 
+                    expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
                     httpOnly: true,
                     sameSite: "Lax",
-                    secure: false 
+                    secure: false
                 });
-                return res.status(200).send({userValid})
+                return res.status(200).send({ userValid })
             }
 
         } else {
@@ -750,7 +796,6 @@ const updatePassword = async (req, res) => {
         const user = req.validUser;
         user.password = newPassword;
         await user.save();
-        console.log(user.password)
         res.status(200).send('Password updated successfully.');
     } catch (error) {
         console.error(error);
@@ -759,4 +804,4 @@ const updatePassword = async (req, res) => {
 };
 
 
-module.exports = {createCompany,companyStatus,updateCompany, getCustomer, updateCustomer, deleteMultipleCompanies, deleteCompany,validateUser,userLogin,userRegister,logoutUser,updatePassword}; 
+module.exports = { createCompany, companyStatus, updateCompany, getCustomer, updateCustomer, deleteMultipleCompanies, deleteCompany, validateUser, userLogin, userRegister, logoutUser, updatePassword }; 

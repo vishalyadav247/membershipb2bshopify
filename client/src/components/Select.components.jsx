@@ -87,7 +87,11 @@ export default function CustomizedMenus() {
 
   return (
     <div>
-      <ToastContainer position='top-right' />
+      <ToastContainer
+        position="top-right"
+        autoClose={600}
+        theme="light"
+      />
       <Button
         id="demo-customized-button"
         aria-controls={open ? 'demo-customized-menu' : undefined}
