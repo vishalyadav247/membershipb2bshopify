@@ -169,11 +169,12 @@ const createCompany = async (req, res) => {
                 }
             }`;
 
+        const customerNumId = customerId.match(/Customer\/(\d+)/)[1];
         const variables1 = {
             input: {
                 company: {
                     name: request.firstName,
-                    externalId: customerId
+                    externalId: customerNumId
                 },
                 companyLocation: {
                     name: request.firstName,
