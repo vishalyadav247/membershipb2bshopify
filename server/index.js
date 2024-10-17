@@ -10,7 +10,7 @@ app.use(cookieParser());
 
 app.use(cors({
     origin: function (origin, callback) {
-        const allowedOrigins = ['http://localhost:3000', 'https://app.progryss.com'];
+        const allowedOrigins = ['http://localhost:3000', 'https://app.progryss.com','https://ickle-bubba-sandbox.myshopify.com/'];
         if (allowedOrigins.includes(origin) || !origin) {
             callback(null, true);
         } else {
