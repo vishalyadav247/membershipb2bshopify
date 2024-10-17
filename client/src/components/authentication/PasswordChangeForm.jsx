@@ -105,13 +105,13 @@ export default function PasswordChange(props) {
 
         if (validateInputs()) {
             try {
-                const res = await axios.put(`${serverUrl}/api/change-password`, changedPass,{
+                const res = await axios.put(`${serverUrl}/api/change-password`, changedPass, {
                     headers: {
-                      "Content-Type": "application/json"
+                        "Content-Type": "application/json"
                     },
                     withCredentials: true
-                  }
-                  );
+                }
+                );
                 const data = res ? res?.data : null;
                 const status = res ? res.status : 500;
 
@@ -119,7 +119,7 @@ export default function PasswordChange(props) {
                     toast.success("Password changed successfully")
                     setTimeout(() => {
                         navigate("/", { replace: true });
-                    }, 1000)
+                    }, 700)
                 }
 
                 console.log(data ? "Password changed" : "Password Not changed")
@@ -182,7 +182,11 @@ export default function PasswordChange(props) {
 
     return (
         <SignInContainer direction="column" justifyContent="space-between" height="100vh" sx={{ backgroundColor: "whitesmoke" }} >
-            <ToastContainer position='top-right' />
+            <ToastContainer
+                position="top-right"
+                autoClose={600}
+                theme="light"
+            />
             <ThemeProvider theme={theme}>
                 <Card variant="outlined">
                     <Typography
@@ -205,7 +209,7 @@ export default function PasswordChange(props) {
                     >
                         <FormControl>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                <FormLabel htmlFor="password" sx={{marginBottom:'10px'}}>Password</FormLabel>
+                                <FormLabel htmlFor="password" sx={{ marginBottom: '10px' }}>Password</FormLabel>
                             </Box>
                             <TextField
                                 error={passwordError}
@@ -240,7 +244,7 @@ export default function PasswordChange(props) {
 
                         <FormControl>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                <FormLabel htmlFor="confirm password" sx={{marginBottom:'10px'}}>Confirm Password</FormLabel>
+                                <FormLabel htmlFor="confirm password" sx={{ marginBottom: '10px' }}>Confirm Password</FormLabel>
                             </Box>
                             <TextField
                                 error={confirmPasswordError}

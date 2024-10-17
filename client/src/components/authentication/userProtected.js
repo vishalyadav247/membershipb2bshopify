@@ -36,7 +36,7 @@ const AuthGuard = ({ children }) => {
 
     useEffect(() => {
         userValidation();
-    }, [location.pathname, userValidation]);
+    }, [location.pathname, userValidation,navigate]);
 
     if (validUser === null) {
         return <div>Loading...</div>;
