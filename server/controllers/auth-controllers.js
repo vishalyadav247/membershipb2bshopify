@@ -1,6 +1,6 @@
 require('dotenv').config();
 const bcrypt = require("bcryptjs");
-
+const { sendCustomerCookie } = require('../utils/utilityFunctions')
 const { User, createCompanyDb } = require('../models/user-models')
 const accessToken = process.env.STORE_API_PASSWORD;
 const url = process.env.STORE_GRAPHQL_URL;
@@ -336,7 +336,7 @@ const createCompany = async (req, res) => {
 
             function convertNewsletterTime(unixTime) {
                 // Convert unixTime from seconds to milliseconds
-                const dateObj = new Date(request.newsletterTimestamp ? unixTime * 1000 : unixTime );
+                const dateObj = new Date(request.newsletterTimestamp ? unixTime * 1000 : unixTime);
 
                 // Get the date components in the 'America/New_York' timezone
                 const options = {
@@ -362,19 +362,13 @@ const createCompany = async (req, res) => {
 
                 // Extract and parse the date components
                 const year = parseInt(dateParts.year, 10);
-                const month = parseInt(dateParts.month, 10); // Months are 1-12
+                const month = parseInt(dateParts.month, 10); 
                 const day = parseInt(dateParts.day, 10);
                 const hour = parseInt(dateParts.hour, 10);
-                const minute = parseInt(dateParts.minute, 10); // Incorrect, should be dateParts.minute
+                const minute = parseInt(dateParts.minute, 10); 
                 const second = parseInt(dateParts.second, 10);
-
-                // CorrectCreate a UTC timestamp corresponding to the 'America/New_York' time
                 const nyDateUTC = Date.UTC(year, month - 1, day, hour, minute, second);
-
-                // Create a Date object from the UTC timestamp
                 const utcDate = new Date(nyDateUTC);
-
-                // Format the UTC time as an ISO string without milliseconds
                 const formattedDate = utcDate.toISOString().split('.')[0] + 'Z';
 
                 return formattedDate;
@@ -386,7 +380,7 @@ const createCompany = async (req, res) => {
                 input: {
                     customerId: customerId,
                     emailMarketingConsent: {
-                        consentUpdatedAt: newsletterTime, // Update the timestamp to the current time
+                        consentUpdatedAt: newsletterTime, 
                         marketingOptInLevel: "CONFIRMED_OPT_IN",
                         marketingState: "SUBSCRIBED"
                     }
@@ -545,6 +539,9 @@ const createCompany = async (req, res) => {
         };
         const newEntry = new createCompanyDb(initialData);
         newEntry.save();
+        request.customerCookie
+            ? await sendCustomerCookie(request)
+            : console.log('No customer cookie provided, skipping.');
         res.status(200).json({ message: 'company created', formData: dbData });
 
     } catch (error) {
