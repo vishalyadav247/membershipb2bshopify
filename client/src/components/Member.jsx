@@ -11,6 +11,8 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { ToastContainer, toast } from 'react-toastify';
 
+const Bottleneck = require('bottleneck');
+
 function Member() {
   const [columns, setColumns] = useState([]);
   const [data, setData] = useState([]);
@@ -26,7 +28,7 @@ function Member() {
   const [trigerUseeffectByDelete, setTrigerUseeffectByDelete] = useState(false);
   const tableHeaderRef = useRef(null);
   const [file, setFile] = useState(null);
-  const[refreshData, setRefreshData] = useState(false);
+  const [refreshData, setRefreshData] = useState(false);
 
   const gettingOptions = JSON.parse(localStorage.getItem('filterOptions'))
   const navigate = useNavigate();
@@ -111,7 +113,7 @@ function Member() {
       }
     }
     hit()
-  }, [viewingCustomer, trigerUseeffectByDelete,refreshData]);
+  }, [viewingCustomer, trigerUseeffectByDelete, refreshData]);
 
   useEffect(() => {
     const filteredData = data.filter((item) => {
@@ -325,58 +327,190 @@ function Member() {
     setFile(e.target.files[0]);
   };
 
-  const handleImportCompany = async () => {
-    if (!file) {
-      console.error('No file selected.');
-      return;
+  
+
+const handleImportCompany = async () => {
+  if (!file) {
+    toast.error('No file selected.');
+    return;
+  }
+
+  if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
+    toast.error('Invalid file type. Please upload a CSV file.');
+    return;
+  }
+
+  // Initialize the rate limiter
+  const limiter = new Bottleneck({
+    reservoir: 1000, // Number of requests per reservoir refresh
+    reservoirRefreshAmount: 1000,
+    reservoirRefreshInterval: 60 * 1000, // Refresh every minute
+    maxConcurrent: 20,
+    minTime: 60 // Minimum time between requests in milliseconds
+  });
+
+  limiter.on('error', (err) => console.error(`Rate limit error: ${err.message}`));
+
+  // Function to check the Shopify API rate limit and throttle if necessary
+  async function checkAndThrottle(response) {
+    const callLimitHeader = response.headers['x-shopify-shop-api-call-limit'];
+    if (callLimitHeader) {
+      const [currentCalls, callLimit] = callLimitHeader.split('/').map(Number);
+      const remainingCalls = callLimit - currentCalls;
+
+      if (remainingCalls < 10) { // Threshold for remaining calls
+        console.warn('Approaching Shopify API rate limit. Throttling requests.');
+        // Pause until the rate limit resets
+        await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second
+      }
+    }
+  }
+
+  // Function to parse and validate the due date
+  function parseDueDate(dueDateInput) {
+    let dueDate;
+    if (!isNaN(Number(dueDateInput))) {
+      // Assume Unix timestamp in seconds
+      dueDate = new Date(Number(dueDateInput) * 1000);
+    } else {
+      // Attempt to parse date string
+      dueDate = new Date(dueDateInput);
     }
 
-    // Parse the CSV file
-    Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: async function (results) {
-        const data = results.data;
-        let createdCount = 0;
-        let skippedCount = 0;
+    if (isNaN(dueDate.getTime())) {
+      throw new Error(`Invalid due date: ${dueDateInput}`);
+    }
 
-        for (const entry of data) {
-          const formObject = { ...entry };
-          console.log('Processing:', formObject);
+    return dueDate.toISOString();
+  }
 
-          const checkStatus = await checkCustomerByEmail(formObject.customerEmail);
+  // Function to send an API request with Shopify rate limit handling
+  async function createCompany(formObject) {
+    return limiter.schedule(async () => {
+      try {
+        const response = await axios.post(`${serverUrl}/api/create-company`, formObject, {
+          headers: { 'Content-Type': 'application/json' }
+        });
 
-          if (checkStatus === 200) {
-            try {
-              const response = await fetch(`${serverUrl}/api/create-company`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formObject),
-              });
-              if (response.ok) {
-                createdCount++;
-                console.log(`Company created for email: ${formObject.customerEmail}`);
-              } else {
-                console.error(`Failed to create company for email: ${formObject.customerEmail}`);
-              }
-            } catch (error) {
-              console.error('Error in sending form data:', error);
-            }
-          } else {
-            skippedCount++;
-            console.log(`Email already exists, skipped: ${formObject.customerEmail}`);
-          }
+        await checkAndThrottle(response); // Adjust based on rate limits
+
+        if (response.status >= 200 && response.status < 300) {
+          console.log(`Company created for email: ${formObject.customerEmail}`);
+          return { success: true, email: formObject.customerEmail };
+        } else if (response.status === 409) { // Conflict, possibly already exists
+          console.warn(`Company already exists for email: ${formObject.customerEmail}`);
+          return { success: false, email: formObject.customerEmail, skipped: true };
+        } else {
+          console.error(`Failed to create company for email: ${formObject.customerEmail}`);
+          return { success: false, email: formObject.customerEmail };
         }
-        toast.success(`${createdCount} companies created.`);
-        setRefreshData(prev => !prev)
-        console.log(`Import Summary: ${createdCount} companies created, ${skippedCount} emails skipped.`);
-      },
-      error: function (error) {
-        toast.error(`Error in creating company.`);
-        console.error('Error parsing CSV file:', error);
-      },
+      } catch (error) {
+        console.error(`Error in sending form data for ${formObject.customerEmail}:`, error.message);
+        return { success: false, email: formObject.customerEmail, error };
+      }
     });
-  };
+  }
+
+  // Function to process entries in batches
+  async function processEntries(data) {
+    const chunkSize = 100; // Adjust based on testing and performance
+    let createdCount = 0;
+    let skippedCount = 0;
+    let failedCount = 0;
+
+    for (let i = 0; i < data.length; i += chunkSize) {
+      const chunk = data.slice(i, i + chunkSize);
+      const promises = chunk.map((entry) => {
+        const formObject = {
+          customerEmail: entry.customerEmail,
+          firstName: entry.firstName,
+          lastName: entry.lastName,
+          countryCode: entry.countryCode,
+          dueDate: parseDueDate(entry.dueDate),
+          relationship: entry.relationship
+        };
+
+        return createCompany(formObject);
+      });
+
+      const results = await Promise.allSettled(promises);
+
+      results.forEach((result) => {
+        if (result.status === 'fulfilled' && result.value.success) {
+          createdCount++;
+        } else if (result.value && result.value.skipped) {
+          skippedCount++;
+        } else {
+          failedCount++;
+        }
+      });
+
+      // Optional: Provide progress feedback
+      console.log(`Processed ${Math.min(i + chunkSize, data.length)} of ${data.length} entries.`);
+    }
+
+    // Provide a detailed report to the user
+    toast.success(`${createdCount} companies created.`);
+    if (skippedCount > 0) {
+      toast.info(`${skippedCount} entries skipped (existing customers).`);
+    }
+    if (failedCount > 0) {
+      toast.error(`${failedCount} requests failed.`);
+    }
+
+    console.log(`Import Summary: ${createdCount} companies created, ${skippedCount} skipped, ${failedCount} failed.`);
+  }
+
+  // Parse CSV and process data
+  Papa.parse(file, {
+    header: true,
+    skipEmptyLines: true,
+    complete: async (results) => {
+      const data = results.data;
+
+      if (!Array.isArray(data) || data.length === 0) {
+        toast.error('Invalid CSV data or no data found.');
+        return;
+      }
+
+      // Perform comprehensive validation
+      const requiredFields = ['customerEmail', 'firstName', 'lastName', 'countryCode', 'dueDate', 'relationship'];
+      const invalidRows = [];
+
+      data.forEach((entry, index) => {
+        const missingFields = requiredFields.filter(field => !entry[field]);
+        if (missingFields.length > 0 || !entry.customerEmail.includes('@')) {
+          invalidRows.push({ index: index + 2, missingFields }); // +2 accounts for header row and zero-based index
+        }
+      });
+
+      if (invalidRows.length > 0) {
+        const errorMessage = invalidRows.map(row =>
+          `Row ${row.index}: Missing or invalid fields - ${row.missingFields.join(', ')}`
+        ).join('\n');
+
+        toast.error(`CSV contains invalid data:\n${errorMessage}`);
+        return;
+      }
+
+      try {
+        await processEntries(data); // Process all entries
+      } catch (error) {
+        toast.error('An error occurred during processing.');
+        console.error('Processing error:', error);
+      }
+    },
+    error: (error) => {
+      toast.error('Error parsing CSV file.');
+      console.error('Error parsing CSV file:', error);
+    }
+  });
+};
+
+  
+
+
+
   // Function to check customer status by email
   const checkCustomerByEmail = async (email) => {
     try {
