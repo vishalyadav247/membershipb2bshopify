@@ -22,7 +22,7 @@ function Member() {
   const [selectedRows, setSelectedRows] = useState([]);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
   const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage] = useState(20);
+  const [rowsPerPage] = useState(100);
   const [columnWidths, setColumnWidths] = useState({});
   const [viewingCustomer, setViewingCustomer] = useState(null);
   const [trigerUseeffectByDelete, setTrigerUseeffectByDelete] = useState(false);
@@ -196,19 +196,68 @@ function Member() {
   const currentRows = filteredResults?.slice(indexOfFirstRow, indexOfLastRow);
   const totalPages = Math.ceil(filteredResults.length / rowsPerPage);
 
-  const handlePrevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-      window.scrollTo({ top: tableHeaderRef.current.offsetTop, behavior: 'smooth' });
-    }
-  };
+  // const handlePrevPage = () => {
+  //   if (currentPage > 1) {
+  //     setCurrentPage(currentPage - 1);
+  //     window.scrollTo({ top: tableHeaderRef.current.offsetTop, behavior: 'smooth' });
+  //   }
+  // };
 
-  const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
-      window.scrollTo({ top: tableHeaderRef.current.offsetTop, behavior: 'smooth' });
-    }
+  // const handleNextPage = () => {
+  //   if (currentPage < totalPages) {
+  //     setCurrentPage(currentPage + 1);
+  //     window.scrollTo({ top: tableHeaderRef.current.offsetTop, behavior: 'smooth' });
+  //   }
+  // };
+  const handlePrevPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+    window.scrollTo({
+      top: tableHeaderRef.current.offsetTop,
+      behavior: 'smooth',
+    });
   };
+  
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+    window.scrollTo({
+      top: tableHeaderRef.current.offsetTop,
+      behavior: 'smooth',
+    });
+  };
+  const getPageNumbers = () => {
+    const totalPageNumbersToShow = 3; // Number of page numbers to display
+    const totalPageNumbers = totalPages;
+    const current = currentPage;
+  
+    const pageNumbers = [];
+  
+    // Always show the first page
+    pageNumbers.push(1);
+  
+    if (current > 3) {
+      pageNumbers.push('...');
+    }
+  
+    // Calculate start and end page numbers
+    const startPage = Math.max(2, current - 1);
+    const endPage = Math.min(totalPages - 1, current + 1);
+  
+    for (let i = startPage; i <= endPage; i++) {
+      pageNumbers.push(i);
+    }
+  
+    if (current < totalPages - 2) {
+      pageNumbers.push('...');
+    }
+  
+    // Always show the last page if there are more than one page
+    if (totalPages > 1) {
+      pageNumbers.push(totalPages);
+    }
+  
+    return pageNumbers;
+  };
+    
 
   const handleResize = (columnId, width) => {
     const updatedWidths = {
@@ -854,23 +903,56 @@ const handleImportCompany = async () => {
             </div>
 
             {/* pagination */}
-            {filteredResults.length > 0 && (
-              <nav className="mt-3">
-                <ul className="customer-pagination pagination justify-content-center">
-                  <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
-                    <button className="page-link" onClick={handlePrevPage}><i className="fa fa-chevron-left"></i></button>
-                  </li>
-                  {Array.from({ length: totalPages }, (_, index) => (
-                    <li key={index} className={`page-item ${index + 1 === currentPage ? 'active' : ''}`}>
-                      <button className="page-link" onClick={() => { setCurrentPage(index + 1); window.scrollTo({ top: tableHeaderRef.current.offsetTop, behavior: 'smooth' }); }}>{index + 1}</button>
-                    </li>
-                  ))}
-                  <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
-                    <button className="page-link" onClick={handleNextPage}><i className="fa fa-chevron-right"></i></button>
-                  </li>
-                </ul>
-              </nav>
-            )}
+      {/* pagination */}
+{filteredResults.length > 0 && (
+  <nav className="mt-3">
+    <ul className="customer-pagination pagination justify-content-center">
+      <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+        <button className="page-link" onClick={handlePrevPage}>
+          <i className="fa fa-chevron-left"></i>
+        </button>
+      </li>
+
+      {/* Generate page numbers */}
+      {getPageNumbers().map((pageNumber, index) => (
+        <li
+          key={index}
+          className={`page-item ${
+            pageNumber === currentPage ? 'active' : ''
+          } ${pageNumber === '...' ? 'disabled' : ''}`}
+        >
+          {pageNumber === '...' ? (
+            <span className="page-link">...</span>
+          ) : (
+            <button
+              className="page-link"
+              onClick={() => {
+                setCurrentPage(pageNumber);
+                window.scrollTo({
+                  top: tableHeaderRef.current.offsetTop,
+                  behavior: 'smooth',
+                });
+              }}
+            >
+              {pageNumber}
+            </button>
+          )}
+        </li>
+      ))}
+
+      <li
+        className={`page-item ${
+          currentPage === totalPages ? 'disabled' : ''
+        }`}
+      >
+        <button className="page-link" onClick={handleNextPage}>
+          <i className="fa fa-chevron-right"></i>
+        </button>
+      </li>
+    </ul>
+  </nav>
+)}
+
 
           </div>
         </div>

@@ -7,9 +7,11 @@ const url = process.env.STORE_GRAPHQL_URL;
 
 const createCompany = async (req, res) => {
     const request = await req.body;
-    let baseEmail = request.customerEmail;
-    let newEmail = baseEmail.toLowerCase()
-    request.customerEmail = newEmail;
+    request.customerEmail = request.customerEmail.toLowerCase();
+    request.relationship = request.relationship.toLowerCase();
+    request.firstName = request.firstName.toLowerCase();
+    request.lastName = request.lastName.toLowerCase();
+
     let otherData = {}
 
     try {
