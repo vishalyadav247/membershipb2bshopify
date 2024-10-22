@@ -426,7 +426,7 @@ const handleImportCompany = async () => {
           firstName: entry.firstName,
           lastName: entry.lastName,
           countryCode: entry.countryCode,
-          dueDate: parseDueDate(entry.dueDate),
+          dueDate: entry.dueDate,
           relationship: entry.relationship
         };
 
