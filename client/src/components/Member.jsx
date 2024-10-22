@@ -11,7 +11,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { ToastContainer, toast } from 'react-toastify';
 
-const Bottleneck = require('bottleneck');
+import Bottleneck from 'bottleneck';
 
 function Member() {
   const [columns, setColumns] = useState([]);
