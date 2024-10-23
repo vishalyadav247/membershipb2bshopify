@@ -12,7 +12,6 @@ router.put('/update-user/:id',allControlers.updateCustomer);
 router.delete('/delete-enquiries',allControlers.deleteMultipleCompanies);
 router.delete('/delete-company/:id',allControlers.deleteCompany);
 
-router.post('/user-register',allControlers.userRegister);
 router.post('/user-login',allControlers.userLogin);
 router.get('/validate-user',authenticate,allControlers.validateUser);
 router.post('/logout',authenticate,allControlers.logoutUser);
