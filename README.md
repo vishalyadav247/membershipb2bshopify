@@ -38,7 +38,7 @@ thhankyou-form
 
 // add popup html according to you need in header or announcement bar or somewhere else
 <div style="position:relative;">
-  <a href='https://ickle-bubba-sandbox.myshopify.com/pages/member-form'>
+  <a href=''>
     <div class="infoPopup" style='display:none;'>
       <div style="position:relative;">
         <p class='infoPopupMessage'></p>
